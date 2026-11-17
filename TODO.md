@@ -2,7 +2,7 @@
 
 ## Fase 0 en 1 — Data en ontwerp
 
-- [ ] D01. Haal één klein sample per bron op. Leg dataset, formaat, CRS, velden, volledigheid en gebruiksvoorwaarden vast. Bevestig de concrete Enexis-bron.
+- [x] D01. Haal één klein sample per bron op. Leg dataset, formaat, CRS, velden, volledigheid en gebruiksvoorwaarden vast. Bevestig de concrete Enexis-bron.
 - [ ] D02. Kies discipline en bbox voor de eerste import en teken de mapping naar het infoschema. Leg toetsbare kwaliteitsmaten en bekende hiaten vast.
 - [ ] D03. Loop architectuur, contract en drie schermschetsen door. Bevestig de keuzes, open vragen en docent-review voordat ik featurecode schrijf.
 

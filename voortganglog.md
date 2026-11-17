@@ -7,3 +7,7 @@ Ik heb de casuseisen vertaald naar een backendwerkstroom en een frontendwerkstro
 Mijn eerstvolgende stap is **D01**. Ik kies een Liander-elektriciteitslaag, inspecteer een klein sample en vul de feitelijke datasetgegevens in het datasheet in. Daarna bevestig ik de Enexis-link en inspecteer ik een Stedin-bestand. Ik gebruik de uitkomsten om de scope, mapping en datakwaliteitsmaten te concretiseren vóór de review.
 
 Ik moet nog bevestigen hoe de docent-review en PR-review voor een individuele uitvoering worden geregeld en welke Azure- en ArcGIS-omgeving ik kan gebruiken.
+
+## Bronproeven afgerond
+
+Ik heb voor Liander, Enexis en Stedin een kleine bronproef uitgevoerd en de uitkomsten in het datasheet vastgelegd. Mijn volgende stap is D02. Ik kies één kabelcategorie en één klein gebied voor de eerste import.
