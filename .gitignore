@@ -1,0 +1,28 @@
+# .NET en editors
+[Bb]in/
+[Oo]bj/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+TestResults/
+coverage/
+
+# Webtools
+node_modules/
+dist/
+
+# Lokale data en uitvoer
+/data/
+/exports/
+/artifacts/
+*.log
+
+# Lokale instellingen en credentials
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+*.pfx
+*.pem
