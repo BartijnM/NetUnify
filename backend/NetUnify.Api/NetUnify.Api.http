@@ -1,0 +1,6 @@
+@NetUnify.Api_HostAddress = http://localhost:5216
+
+GET {{NetUnify.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
