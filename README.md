@@ -17,4 +17,10 @@ Backend en frontend worden door afzonderlijke ontwikkelaars binnen één repo ui
 | [docs/api-contract.md](docs/api-contract.md) | Gedeeld API-voorstel |
 | [docs/scope.md](docs/scope.md) | Gedeelde scope en integratievragen |
 
+## Status en leeswijzer
 
+De documentatie beschrijft het doel en de huidige ontwerpafspraken. Er is nog geen applicatiecode aanwezig. D01 en D02 zijn uitgewerkt; voor B01 is een beperkte lokale backendproef goedgekeurd. De volledige D03-review en de afstemming met de frontend zijn nog niet afgerond.
+
+Voor een eerste kennismaking: lees [scope en werkwijze](docs/scope.md), vervolgens de [backendintroductie](backend/README.md) en het [API-contract](docs/api-contract.md). De concrete eerste bouwstap staat in [B01: lokale jobsproef](backend/docs/b01-jobsproef.md).
+
+Ontwerpkeuzes vormen een werkbare basis en kunnen tijdens de ontwikkeling worden aangepast. Gecontroleerde bronfeiten, ontwerpafspraken, voorstellen en nog open vragen worden apart benoemd. Een ontwerpafspraak betekent niet dat de functionaliteit al gebouwd of getest is.

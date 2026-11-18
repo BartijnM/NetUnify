@@ -15,7 +15,7 @@ flowchart LR
 
 ## Backendwerkstroom en integratie
 
-De backend wordt gebouwd met C# en ASP.NET Core en beheert bron-IO, mappingversies, jobs, transacties, toegangscontrole en kwaliteitsberekeningen. De frontend gebruikt de API. De backenddocumentatie bevat geen frontendframework, schermontwerp of frontendplanning.
+De backend wordt ontworpen met C# en ASP.NET Core en gaat de volgende onderdelen beheren: bron-IO, mappingversies, jobs, transacties, toegangscontrole en kwaliteitsberekeningen. De frontend gebruikt de API. De backenddocumentatie bevat geen frontendframework, schermontwerp of frontendplanning.
 
 Het [API-contract](../../docs/api-contract.md) is het gedeelde afstemmingspunt en blijft concept totdat de integratieafspraken zijn bevestigd. Origin, authenticatiestroom, hosting en eventuele proxy worden in D03 afgestemd.
 
@@ -41,6 +41,21 @@ Verwerking gebruikt begrensde concurrency, annuleerbare workers en veilige aggre
 
 ## D02 — Mapping van de eerste import
 
-De gekozen Liander-LS-selectie, veldmapping, handmatige controles en quarantaine- en kwaliteitsregels staan in het [backenddatasheet](datasheet.md#d02--eerste-import-liander-laagspanning). Dit zijn vastgelegde ontwerpkeuzes; de ontwerpreview en implementatie zijn nog niet afgerond. Volledige kabelgeometrie wordt als MultiLineString gebruikt; onbekende spanning, materiaal en peildatum blijven expliciet onbekend.
+De gekozen Liander-LS-selectie, veldmapping, handmatige controles en quarantaine- en kwaliteitsregels staan in het [backenddatasheet](datasheet.md#d02--eerste-import-liander-laagspanning). Dit zijn huidige ontwerpkeuzes; de volledige ontwerpreview en implementatie zijn nog niet afgerond. Bij nieuwe inzichten kunnen de keuzes met onderbouwing worden herzien. Volledige kabelgeometrie wordt als MultiLineString gebruikt; onbekende spanning, materiaal en peildatum blijven expliciet onbekend.
 
 D03 omvat onder meer de beoordeling van opslag-CRS, transformatie, assetherkenning tussen publicaties, mappingversie, API-bbox-CRS, jobuitvoering en integratie met de frontend.
+
+
+## Eerste bouwstap: lokale B01-proef
+
+De huidige keuze is één ASP.NET Core Web API-project op .NET 10 onder `backend/NetUnify.Api/`. Deze indeling houdt de eerste versie overzichtelijk en onafhankelijk van de frontend.
+
+| Onderdeel | Rol in de proef |
+| --- | --- |
+| `JobsController` | Ontvangt GET /api/v1/jobs en geeft HTTP-status en antwoord terug |
+| `JobService` | Levert en sorteert vaste fictieve jobs |
+| DTO's onder `Contracts/` | Beschrijven de afgesproken JSON-velden; DTO betekent data transfer object |
+
+Bijvoorbeeld: een GET-verzoek komt bij de controller binnen. De controller vraagt de service om jobs en retourneert het DTO-antwoord met HTTP 200. De controller bevat geen Liander-query, mapping of databasecode. Later kan de bron van jobgegevens veranderen zonder dat de antwoordvorm noodzakelijk hoeft te veranderen.
+
+Deze proef bouwt nog geen connector, database, jobworker of rolbeveiliging. De rollen en verwerkingsarchitectuur in dit document blijven het beoogde vervolg. Ze zijn geen reeds aanwezige garanties. Details en gerichte controles staan in [B01: lokale jobsproef](b01-jobsproef.md).
