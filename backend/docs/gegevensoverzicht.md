@@ -1,145 +1,117 @@
-# Gegevensoverzicht NetUnify
+# Overzicht gegevensstroom NetUnify
 
-Dit document beschrijft de gegevens in de huidige lokale backendproeven, gecontroleerd aan de broncode op 24 november 2026. De tabellen geven per veld de betekenis, herkomst en een voorbeeld. Voor de precieze importregels en broncontroles geldt het [datasheet](datasheet.md). De gedeelde API-afspraken staan in het [API-contract](../../docs/api-contract.md).
+NetUnify haalt open liggingsgegevens van elektriciteitskabels op bij netbeheerders. De backend zet de verschillende bronformaten om naar één assetmodel, controleert de gegevens en maakt de uitkomsten beschikbaar voor de frontend.
 
-**Open liggingsdata voor analyse en demonstratie. Geen KLIC en geen informatie voor graafveiligheid.**
+**De gegevens zijn bedoeld voor analyse en demonstratie. Geen KLIC en geen informatie voor graafveiligheid.**
 
-## Overzicht van de gegevensstromen
+## Bronnen en binnenkomst
 
-| Gegevens | Betekenis | Huidige herkomst en status |
-| --- | --- | --- |
-| Bronrecords | Kabels met bronkenmerken en ligging | Liander-laag 112 wordt via een vaste ArcGIS-query opgehaald |
-| Assets | Kabelrecords omgezet naar het uniforme NetUnify-model | LianderAssetMapper en LianderGeometryMapper maken deze in geheugen |
-| Importresultaat | Gelezen aantal, geaccepteerde assets, afkeurmeldingen en mappingversie | LianderImportProcessor levert dit voor de lokale controle |
-| Quarantaine | Registratie van records die de validatie afkeurt | De processor bewaart per afgekeurd record een verwijzing en foutcode in geheugen |
-| Jobs | Samenvattingen van verwerkingsopdrachten | JobService levert drie vaste fictieve voorbeelden via GET /api/v1/jobs |
-
-De lokale Liander-controle en het fictieve jobsoverzicht werken afzonderlijk. De koppeling naar echte jobs, opslag en snapshots is vervolgwerk.
-
-## Bronnen en selectie
-
-| Bron | Onderzochte gegevens | Huidige verwerking |
-| --- | --- | --- |
-| Liander | Laagspanningskabels, Liander_Open_Data_Elektra/112 | Connector, mapping en validatie voor de vaste selectie gebouwd en gecontroleerd |
-| Enexis | Middenspanningskabels via de provincie Groningen, laag 2 | Drie records onderzocht tijdens D01; connector nog te bouwen |
-| Stedin | Middenspanningsverbindingen als shapefile | Bestandsstructuur en drie attribuutrijen onderzocht tijdens D01; connector nog te bouwen |
-
-| Selectie-eigenschap Liander | Huidige waarde | Betekenis |
-| --- | --- | --- |
-| Bron- en uitvoer-CRS van de query | EPSG:28992, RD New | x/y-coördinaten in meters |
-| Bbox | [210650, 467800, 210850, 468000] | West, zuid, oost, noord; gebied van 200 × 200 meter |
-| Ruimtelijke selectie | intersects | Een kabel die het gebied raakt of doorsnijdt kan worden geselecteerd |
-| Geometriebehoud | Volledige geometrie | Geselecteerde kabels kunnen buiten de bbox doorlopen |
-| Aantal bij de laatste gemelde live controle | 23 | Broninhoud kan bij een latere aanroep veranderen |
-| Gevraagde recordlimiet | 100 | De huidige connector stopt bij een gemelde transferlimiet; paginering volgt later |
-
-## Velden uit het Liander-antwoord
-
-Een bronrecord staat onder features. Kenmerken staan onder attributes; de geometrie staat onder geometry. De voorbeelden hieronder illustreren het formaat. OBJECTID 7836116 en de lengte van circa 66,03 meter komen uit de eerdere D01-steekproef.
-
-| Bronveld of JSON-pad | Gegevenstype | Betekenis | Voorbeeld en gebruik |
+| Bron | Hoe komen de gegevens binnen? | Welke gegevens worden verwacht? | Huidige stand |
 | --- | --- | --- | --- |
-| attributes.OBJECTID | Geheel getal; gelezen als long | Identificatie binnen de bronlaag | 7836116; wordt SourceRecordId als tekst |
-| attributes.Shape__Length | Decimaal getal, meters | Lengteattribuut van de brongeometrie | Circa 66,03; heeft momenteel geen eigen veld in Asset |
-| geometry.paths | Lijst van lijnpaden | Elk pad bevat opeenvolgende coördinaatparen | [[[210650,467800],[210750,467800]]]; illustratief |
-| geometry.paths[pad][punt][0] | Eindig getal, meters | RD-x, oostwaartse coördinaat | 210650 |
-| geometry.paths[pad][punt][1] | Eindig getal, meters | RD-y, noordwaartse coördinaat | 467800 |
+| Liander | De connector doet een HTTP-verzoek aan een ArcGIS REST-service en ontvangt JSON | Bronkenmerken en lijnpaden met coördinaten van kabels | Ophalen en verwerken voor één klein gebied werkt lokaal |
+| Enexis | Een onderzochte ArcGIS-service van de provincie Groningen biedt JSON met Enexis-gegevens aan | Kabelgeometrie en kenmerken, waaronder spanning en eenheid | Bronproef uitgevoerd; connector volgt later |
+| Stedin | Download als ZIP met samenhangende shapefile-bestanden | Kabelgeometrie in .shp, kenmerken in .dbf en het coördinatenstelsel in .prj | Bronproef uitgevoerd; connector volgt later |
 
-De laagmetadata en eerdere bronproef bevestigen RD New. De connector vraagt outSR=28992 aan. Een afzonderlijke automatische controle van de CRS-metadata van ieder antwoord is vervolgwerk.
+De bronnen gebruiken verschillende bestandsformaten en veldnamen. Een connector leest het formaat van een specifieke bron. Mapping zet de ontvangen gegevens vervolgens om naar dezelfde namen en structuur binnen NetUnify.
 
-## Uniform assetmodel
+## Concrete gegevens die binnenkomen uit de bron
 
-Een asset stelt één geaccepteerd kabelrecord voor. Het C#-model staat in Models/Asset.cs. De volgende namen zijn de interne C#-propertynamen. De kaartuitvoer moet later als GeoJSON worden uitgewerkt.
-
-| Veld | C#-type | Betekenis en herkomst | Voorbeeld in de Liander-mapping |
-| --- | --- | --- | --- |
-| AssetId | Guid | Door NetUnify gegenereerde identificatie; nieuw bij iedere mapping | Een nieuwe GUID |
-| Operator | string | Netbeheerder, gekozen op basis van de bron | Liander |
-| SourceDataset | string | Exacte verwijzing naar bronservice en laag | Liander_Open_Data_Elektra/112 |
-| SourceRecordId | string | OBJECTID als cultuuronafhankelijke tekst | "7836116" |
-| Discipline | string | Soort netwerk, afgeleid uit de dataset | electricity |
-| AssetType | string | Soort asset, afgeleid uit de laag | cable |
-| VoltageClass | string | Spanningscategorie, afgeleid uit Laagspanningskabel | LV, laagspanning |
-| VoltageKv | double? | Exacte spanning in kilovolt, indien bekend | null; ontbreekt als bronveld |
-| Material | string? | Materiaal van de kabel, indien bekend | null; ontbreekt als bronveld |
-| Geometry | MultiLineString | Alle lijnpaden, met behoud van puntvolgorde, intern in RD | SRID 28992, één of meer lijnpaden |
-| JobId | Guid | Verwijzing naar de verwerkende poging | De lokale proef gebruikt vast ID …0010 |
-
-Een null betekent dat een optioneel kenmerk onbekend is. SourceRecordId en SourceDataset leggen samen de bronverwijzing vast. De stabiliteit van OBJECTID tussen bronpublicaties is nog een open vraag. AssetId wordt bij een volgende aanroep opnieuw gegenereerd.
-
-## Importresultaat en lokale controlesamenvatting
-
-Het interne model staat in Models/ImportResult.cs. De processor verwerkt één opgehaalde selectie volledig in geheugen.
-
-| Intern veld | C#-type | Betekenis | Laatst gecontroleerde waarde |
-| --- | --- | --- | --- |
-| JobId | Guid | Identificatie van de verwerkingspoging | 00000000-0000-0000-0000-000000000010, vast voor de lokale proef |
-| MappingVersion | string | Versie van de gebruikte mapping- en validatieregels | liander-lv-v1 |
-| Read | int | Aantal gelezen bronrecords | 23 |
-| Assets | IReadOnlyList<Asset> | Geaccepteerde uniforme assets | 23 assets |
-| Quarantine | IReadOnlyList<QuarantineRecord> | Afkeurmeldingen voor bronrecords | Lege lijst |
-
-GET /dev/liander/sample is beschikbaar in Development en toont de onderstaande samenvatting. De assets worden tijdens de aanroep intern opgebouwd.
-
-| JSON-veld | Betekenis | Laatst gecontroleerde waarde |
+| Gegeven in een Liander-record | Wat stelt het voor? | Wat gebeurt ermee? |
 | --- | --- | --- |
-| jobId | JobId uit het importresultaat | Vast lokaal voorbeeld-ID, eindigend op 0010 |
-| mappingVersion | MappingVersion uit het importresultaat | liander-lv-v1 |
-| counts.read | Aantal gelezen records | 23 |
-| counts.accepted | Aantal assets | 23 |
-| counts.quarantined | Aantal afkeurmeldingen | 0 |
-| countsBalance | Controle op read = accepted + quarantined | true |
-| errors | Lijst met afkeurmeldingen | [] |
+| attributes.OBJECTID | Identificatie van het bronrecord | Wordt gecontroleerd op aanwezigheid, geldigheid en dubbele voorkomens; wordt daarna de bron-ID van de asset |
+| attributes.Shape__Length | Lengte van de bronlijn in meters | Komt mee uit de bron; heeft momenteel geen eigen veld in het uniforme assetmodel |
+| geometry.paths | Eén of meer lijnpaden met x/y-coördinaten in meters, RD New | Wordt gecontroleerd en omgezet naar een MultiLineString met behoud van volledige paden |
 
-## Quarantaine en foutcodes
+De bron levert in deze laag geen eigen velden voor exacte spanning en materiaal. Deze kenmerken blijven onbekend in het assetmodel.
 
-| Veld | C#-type | Betekenis |
+## Concrete gegevens per verwerkte asset
+
+De verwerking maakt voor ieder geaccepteerd bronrecord onderstaande gegevens aan. Deze assets bestaan tijdens de lokale aanroep in het geheugen.
+
+| Intern veld | Huidige inhoud | Betekenis |
 | --- | --- | --- |
-| JobId | Guid | Verwerkingspoging waarin het record is afgekeurd |
-| RecordNumber | int | Positie in het opgehaalde antwoord, beginnend bij 1 |
-| SourceRecordId | string? | Bron-ID indien beschikbaar; bij ontbrekend of ongeldig ID is dit null |
-| ReasonCode | string | Herkenbare reden van afkeur |
+| AssetId | Nieuw gegenereerde GUID | Eigen identificatie van de asset |
+| Operator | Liander | Netbeheerder |
+| SourceDataset | Liander_Open_Data_Elektra/112 | Dataset en laag waar het record vandaan komt |
+| SourceRecordId | OBJECTID als tekst | Verwijzing naar het oorspronkelijke bronrecord |
+| Discipline | electricity | Elektriciteitsnet |
+| AssetType | cable | Kabel |
+| VoltageClass | LV | Laagspanning, afgeleid uit de gekozen laag |
+| VoltageKv | null | Exacte spanning onbekend |
+| Material | null | Materiaal onbekend |
+| Geometry | MultiLineString, SRID 28992 | Kabelpaden in RD New |
+| JobId | 00000000-0000-0000-0000-000000000010 | Vast ID van de lokale controlepoging |
 
-| ReasonCode | Betekenis |
+## Exact antwoord van de lokale importcontrole
+
+GET /dev/liander/sample gaf bij de laatste door de ontwikkelaar uitgevoerde controle de volgende waarden terug.
+
+| Veld in het antwoord | Gecontroleerde waarde | Betekenis |
+| --- | --- | --- |
+| jobId | 00000000-0000-0000-0000-000000000010 | Vast ID van de lokale controlepoging |
+| mappingVersion | liander-lv-v1 | Gebruikte versie van de omzettings- en validatieregels |
+| counts.read | 23 | Gelezen bronrecords |
+| counts.accepted | 23 | Geaccepteerde assets |
+| counts.quarantined | 0 | Afgekeurde records |
+| countsBalance | true | Gelezen aantal is gelijk aan geaccepteerd plus afgekeurd |
+| errors | [] | Leeg afkeuroverzicht |
+
+Het endpoint toont deze samenvatting. De assets uit de vorige tabel worden intern opgebouwd. Een latere live aanroep kan andere aantallen opleveren wanneer de bron verandert.
+
+## Exacte inhoud van de huidige jobs
+
+GET /api/v1/jobs geeft een object met items en nextCursor. Items bevat de onderstaande drie fictieve jobs in deze volgorde. Bij alle drie is operator `Liander` en dataset `Liander_Open_Data_Elektra/112`.
+
+| Veld | Eerste job | Tweede job | Derde job |
+| --- | --- | --- | --- |
+| jobId | 00000000-0000-0000-0000-000000000002 | 00000000-0000-0000-0000-000000000003 | 00000000-0000-0000-0000-000000000001 |
+| status | succeeded | queued | succeeded |
+| submittedAt | 2026-11-19T10:00:00+00:00 | 2026-11-19T10:00:00+00:00 | 2026-11-19T09:00:00+00:00 |
+| counts | Object met de tellingen hieronder | null | Object met de tellingen hieronder |
+| counts.read | 0 | — | 23 |
+| counts.accepted | 0 | — | 21 |
+| counts.quarantined | 0 | — | 2 |
+
+| Gegeven | Betekenis |
 | --- | --- |
-| SOURCE_ID_MISSING | Het record bevat geen beschikbaar OBJECTID |
-| SOURCE_ID_INVALID | OBJECTID is geen geheel getal dat als long kan worden gelezen |
-| SOURCE_ID_DUPLICATE | Hetzelfde bron-ID komt meermaals voor in deze selectie; alle voorkomens worden afgekeurd |
-| GEOMETRY_PATHS_MISSING | De geometrie bevat geen bruikbare, niet-lege paths-array |
-| GEOMETRY_PATH_TOO_SHORT | Een pad is geen array of bevat minder dan twee punten |
-| GEOMETRY_COORDINATE_INVALID | Een punt bevat geen twee eindige numerieke x/y-waarden |
-| GEOMETRY_POINTS_IDENTICAL | Een pad bevat minder dan twee verschillende x/y-punten |
+| jobId | Identificatie van de opdracht |
+| operator en dataset | Bron waarop de opdracht betrekking heeft |
+| status | De voorbeeldstatus; succeeded betekent geslaagd en queued betekent wachtend |
+| submittedAt | Indieningstijd in UTC |
+| counts | Bekende tellingen; null betekent dat de tellingen nog onbekend zijn |
+| nextCursor | Is voor dit antwoord null; de drie jobs passen in één antwoord |
 
-Bij een dubbel bron-ID krijgt de duplicaatcode voorrang op een eventuele geometriefout. Eén ongeldig pad leidt tot afkeur van het volledige record.
+Bij de wachtende job zijn de drie tellingsvelden afwezig doordat counts null is. De afgeronde lege job heeft bekende aantallen van nul. Het jobsoverzicht gebruikt vaste voorbeeldwaarden; de actuele Liander-verwerking heeft een eigen controleantwoord hierboven.
 
-## Jobs via GET /api/v1/jobs
+## Verwerking van de gegevens
 
-Een job stelt een opdracht tot gegevensverwerking voor. De huidige drie jobs zijn vaste demonstratiegegevens uit Services/JobService.cs. De status en tellingen daarvan worden in de code ingevuld. Het endpoint voert geen bronimport uit.
+| Stap | Wat gebeurt er? | Wat levert dat op? |
+| --- | --- | --- |
+| 1. Selectie bepalen | Een bron, dataset en gebied worden gekozen | Een afgebakende hoeveelheid brondata om te verwerken |
+| 2. Ophalen | De connector vraagt de gegevens op of leest de bronbestanden | Bronrecords met kenmerken en geometrie |
+| 3. Controleren | De backend controleert bron-ID's, dubbele ID's en de structuur van lijnpaden | Een oordeel per record en een foutcode bij afkeur |
+| 4. Uniform maken | De mapper zet bruikbare records om naar het assetmodel | Assets met dezelfde structuur, met behoud van bronverwijzing en geometrie |
+| 5. Afkeur verzamelen | Onbruikbare records krijgen een verwijzing en reden in het afkeuroverzicht | Inzicht in welke records zijn afgekeurd en waarom |
+| 6. Resultaat samenvatten | De backend telt gelezen, geaccepteerde en afgekeurde records en vermeldt de mappingversie | Een controleerbaar verwerkingsresultaat |
+| 7. Beschikbaar stellen | De API levert gegevens aan de frontend voor jobs, inzichten en de kaart | De lokale controlesamenvatting werkt; de verdere frontendkoppeling volgt |
 
-| JSON-veld | C#-type | Betekenis | Voorbeeld |
-| --- | --- | --- | --- |
-| items | IReadOnlyList<JobDto> | De lijst met jobs | Drie fictieve jobs, of [] bij een lege lijst |
-| nextCursor | string? | Verwijzing naar een volgende pagina | null; echte paginering volgt later |
-| items[].jobId | Guid | Unieke identificatie van een job | 00000000-0000-0000-0000-000000000002 |
-| items[].operator | string | Netbeheerder waarop de job betrekking heeft | Liander |
-| items[].dataset | string | Brondataset waarop de job betrekking heeft | Liander_Open_Data_Elektra/112 |
-| items[].status | string | Verwerkingsstatus volgens de API-afspraak | succeeded of queued in de huidige voorbeelden |
-| items[].submittedAt | DateTimeOffset | Tijdstip waarop de opdracht is ingediend, in UTC | 2026-11-19T10:00:00+00:00 |
-| items[].counts | JobCountsDto? | Beschikbare tellingen, of null als onbekend | {"read":23,"accepted":21,"quarantined":2} |
-| items[].counts.read | long | Aantal gelezen records | 23 |
-| items[].counts.accepted | long | Aantal geaccepteerde records | 21 |
-| items[].counts.quarantined | long | Aantal afgekeurde records | 2 |
+Het uniforme assetmodel bevat onder meer netbeheerder, brondataset, bron-ID, kabelcategorie, geometrie en een verwijzing naar de verwerking. Ontbrekende optionele kenmerken blijven onbekend. Na volledige verwerking geldt **gelezen = geaccepteerd + afgekeurd**.
 
-De jobs zijn gesorteerd op submittedAt van nieuw naar oud, gevolgd door jobId oplopend. De onderstaande drie regels tonen de huidige uitvoervolgorde. Alle tijden zijn op 19 november 2026 in UTC; de GUID-prefix is 00000000-0000-0000-0000-.
+## Rol van een importjob
 
-| Job-ID-suffix | Tijd | Status | Tellingen | Betekenis van het voorbeeld |
-| --- | --- | --- | --- | --- |
-| 000000000002 | 10:00 | succeeded | 0 / 0 / 0 | Volledig verwerkte lege selectie |
-| 000000000003 | 10:00 | queued | counts null | Wachtende opdracht met onbekende tellingen |
-| 000000000001 | 09:00 | succeeded | 23 / 21 / 2 | Afgeronde voorbeeldverwerking met twee afgekeurde records |
+Een importjob stelt één opdracht voor om een bronselectie te verwerken. Een job krijgt een eigen ID, zodat bron, voortgang en resultaat bij dezelfde poging kunnen worden teruggevonden.
 
-De API-afspraak voorziet ook running, failed en cancelled. Die statussen hebben momenteel geen voorbeeldrecord. Beschikbare tellingen tijdens verwerking of na een vroegtijdige stop zijn voorlopig. Bij volledig verwerken geldt read = accepted + quarantined. Een bekend aantal nul en een onbekende telling null hebben elk hun eigen betekenis.
+| Onderdeel van de job | Betekenis |
+| --- | --- |
+| Opdracht | Welke bron, dataset en gebied moeten worden verwerkt? |
+| Status | Wachtend, bezig, geslaagd, mislukt of geannuleerd |
+| Tijden | Wanneer is de opdracht ingediend, gestart en afgerond? |
+| Mappingversie | Welke omzettings- en validatieregels zijn gebruikt? |
+| Tellingen | Hoeveel records zijn gelezen, geaccepteerd en afgekeurd? |
+| Resultaat | Welke assets en afkeurmeldingen horen bij deze poging? |
 
-## Vervolg en open gegevensvragen
+Deze tabel beschrijft de beoogde rol van echte importjobs. Het huidige jobsoverzicht toont vaste fictieve voorbeelden. De lokale Liander-proef haalt al echte brondata op en verwerkt deze direct in geheugen, met een vast job-ID voor de controle. De koppeling tussen die verwerking en echte jobs met statusopvolging en opslag volgt later.
 
-De WGS84-transformatie en GeoJSON-uitvoer volgen na de huidige RD-proef. Databaseopslag, snapshots met bronpeildatum en ophaalmoment, duurzame jobs en de koppeling tussen importresultaten en het jobsoverzicht zijn vervolgwerk. De bronpeildatum en stabiliteit van bron-ID's blijven open vragen. Het [datasheet](datasheet.md) bevat de gecontroleerde NSGI-referentie en alle datasetgebonden beperkingen.
+## Wat kan nu worden getoond?
+
+De lokale Liander-proef toont de route van bronverzoek naar mapping, validatie en een resultaat met tellingen en afkeurmeldingen. Het afzonderlijke jobs-endpoint toont hoe de frontend straks een jobsoverzicht kan ontvangen. Automatische tests controleren de huidige mapping- en afkeurregels. Opslag, duurzame jobuitvoering, de andere connectors en kaartuitvoer zijn volgende uitbreidingen.
