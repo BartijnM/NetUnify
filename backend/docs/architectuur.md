@@ -43,7 +43,7 @@ Verwerking gebruikt begrensde concurrency, annuleerbare workers en veilige aggre
 
 De gekozen Liander-LS-selectie, veldmapping, handmatige controles en quarantaine- en kwaliteitsregels staan in het [backenddatasheet](datasheet.md#d02--eerste-import-liander-laagspanning). Dit zijn huidige ontwerpkeuzes; de volledige ontwerpreview en implementatie zijn nog niet afgerond. Bij nieuwe inzichten kunnen de keuzes met onderbouwing worden herzien. Volledige kabelgeometrie wordt als MultiLineString gebruikt; onbekende spanning, materiaal en peildatum blijven expliciet onbekend.
 
-D03 omvat onder meer de beoordeling van opslag-CRS, transformatie, assetherkenning tussen publicaties, mappingversie, API-bbox-CRS, jobuitvoering en integratie met de frontend.
+RD New als intern CRS, MultiLineString, NetTopologySuite en mappingversie liander-lv-v1 zijn inmiddels gekozen voor de lokale Liander-proef. D03 omvat nog databaseopslag, de concrete transformatiewijze, assetherkenning tussen publicaties, API-bbox-CRS, jobuitvoering en integratie met de frontend.
 
 
 ## Eerste bouwstap: lokale B01-proef
@@ -61,3 +61,23 @@ De klasse `JobsController` staat momenteel in `Controllers/JobController.cs`. `J
 Bijvoorbeeld: een GET-verzoek komt bij de controller binnen. De controller vraagt de service om jobs en retourneert het DTO-antwoord met HTTP 200. De controller bevat geen Liander-query, mapping of databasecode. Later kan de bron van jobgegevens veranderen zonder dat de antwoordvorm noodzakelijk hoeft te veranderen.
 
 Deze proef bouwt nog geen connector, database, jobworker of rolbeveiliging. De rollen en verwerkingsarchitectuur in dit document blijven het beoogde vervolg. Ze zijn geen reeds aanwezige garanties. Details en gerichte controles staan in [B01: lokale jobsproef](b01-jobsproef.md).
+
+## Lokale B02-verwerking
+
+De ontwikkelroute `/dev/liander/sample` in Program.cs is beschikbaar in Development. De route haalt via LianderConnector de vaste D02-selectie op, verwerkt deze via LianderImportProcessor en toont mappingversie, tellingen, balans en afkeurmeldingen. De HTTP-client is met AddHttpClient geregistreerd.
+
+| Onderdeel | Huidige verantwoordelijkheid |
+| --- | --- |
+| Connectors/LianderConnector.cs | Vaste ArcGIS-query en controle op HTTP-/bronfout en afgekapt antwoord |
+| Mapping/LianderAssetMapper.cs | Bron-ID, vaste assetkenmerken en mappingversie liander-lv-v1 |
+| Mapping/LianderGeometryMapper.cs | Lijnstructuurcontroles en MultiLineString in RD met SRID 28992 |
+| Services/LianderImportProcessor.cs | Alle dubbele ID's afkeuren, assets mappen en quarantaine verzamelen |
+| Models/Asset.cs | Uniform assetmodel in geheugen |
+| Models/ImportResult.cs | Resultaat met jobId, mappingVersion, read, assets en quarantaine |
+| NetUnify.Api.Tests/UnitTest1.cs | 15 vaste xUnit-scenario's voor mapping, afkeur, tellingen en geometriebehoud |
+
+De ontwikkelaar bevestigde de live verwerking van 23 records en 15 geslaagde automatische tests. Details, beperkingen en het NSGI-referentiepunt staan in het [datasheet](datasheet.md#b02--lokale-liander-verwerking-gecontroleerd-op-24-november-2026).
+
+De interne geometrie gebruikt NetTopologySuite 2.6.0, MultiLineString en RD New. Voor kaartuitvoer is een getransformeerde kopie afgesproken, met ETRS89 gelijkgesteld aan WGS84 voor visualisatie. De concrete transformatie en nauwkeurigheidscontrole volgen. Het JSON van de ontwikkelroute bevat alleen een verwerkingssamenvatting; GeoJSON-uitvoer is vervolgwerk.
+
+De lokale proef gebruikt een vast fictief job-ID en genereert nieuwe asset-ID's per aanroep. Het fictieve jobs-endpoint blijft een afzonderlijke B01-proef. Duurzame jobs, opslag, herhaalbaarheid tussen pogingen, snapshots, export en autorisatie vragen vervolgimplementatie. De volledige D03-review blijft open.

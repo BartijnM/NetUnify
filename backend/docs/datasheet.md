@@ -6,7 +6,7 @@ Een bbox is een rechthoek met west-, zuid-, oost- en noordgrens. Voor andere bro
 
 | Bron | Onderzochte categorie | Status |
 | --- | --- | --- |
-| Liander | Laagspanningskabel, laag 112 | Eerste importbron; D01 en de D02-selectie handmatig onderzocht. |
+| Liander | Laagspanningskabel, laag 112 | Eerste importbron; D01/D02 handmatig onderzocht. Lokale B02-verwerking met 23 records en 15 automatische tests gecontroleerd. |
 | Enexis | Middenspanningskabel, provinciale publicatie, laag 2 | Werkende bronquery en drie records gecontroleerd; dekking en peildatum nog open. |
 | Stedin | Middenspanningsverbindingen, shapefile | Bestandsstructuur, CRS, geometriesoort en drie DBF-rijen gecontroleerd; bron-ID en herpublicatievoorwaarden nog open. |
 
@@ -132,10 +132,10 @@ Dit gebied is 200 × 200 meter. De volledige geometrie van geselecteerde kabels 
 | `voltageClass` | `LV` | Afgeleid uit Laagspanningskabel; interne code gekozen |
 | `voltageKv` | `null` | Geen veld voor exacte spanning in het gecontroleerde veldschema |
 | `material` | `null` | Geen materiaalveld in het gecontroleerde veldschema |
-| `geometry` | Alle `geometry.paths` naar één `MultiLineString`, met behoud van paden en puntvolgorde | Ontwerpkeuze; transformatie nog niet getest |
+| `geometry` | Alle `geometry.paths` naar één `MultiLineString`, met behoud van paden en puntvolgorde | RD-mapping geïmplementeerd en getest; WGS84-transformatie nog open |
 | `jobId` | Verwijzing naar de verwerkende importjob | Context uit de toekomstige import, geen bronveld |
 
-Aan de API-grens wordt geometrie omgezet naar WGS84, lengtegraad vóór breedtegraad. Het interne opslag-CRS en de transformatiewijze worden in D03 beoordeeld. Het bron-CRS van deze bbox bepaalt niet automatisch het bbox-CRS in het API-contract.
+Voor de toekomstige GeoJSON-uitvoer is WGS84 met lengtegraad vóór breedtegraad afgesproken. Intern is RD New (EPSG:28992) gekozen, met NetTopologySuite MultiLineString. Databaseopslag en de concrete transformatiebibliotheek staan nog open. De WGS84-transformatie is nog te bouwen en te testen. Het bron-CRS van deze bbox bepaalt niet automatisch het bbox-CRS in het API-contract.
 
 `Shape__Length` is beschikbaar als bronattribuut, maar krijgt in het huidige Asset-model geen eigen veld. Voor latere lengteberekeningen moet een geschikte metrische of geodetische methode worden gekozen en de gebiedsselectie expliciet worden gemaakt.
 
@@ -153,9 +153,9 @@ Voor `DatasetSnapshot` blijft `peildatum` null zolang geen betrouwbare bronpeild
 | Ieder pad bevat minimaal twee verschillende punten | Bevestigd voor alle 23 records |
 | Veldschema met `outFields=*` | Alleen `OBJECTID` en `Shape__Length`; geometrie staat afzonderlijk in het antwoord |
 
-Deze uitkomsten zijn handmatige broncontroles, geen uitgevoerde import of volledige geometrievalidatie. Eindige numerieke waarden en de coördinatentransformatie zijn nog niet automatisch getest. De uitkomsten gelden alleen voor deze selectie op dit controlemoment.
+Deze uitkomsten beschrijven de handmatige broncontrole van 18 november. De latere geautomatiseerde lijnstructuurcontroles en lokale verwerking staan onder B02. De coördinatentransformatie staat nog open. De handmatige uitkomsten gelden voor deze selectie op dit controlemoment.
 
-### Afgesproken validatie en quarantaine (nog te bouwen)
+### Afgesproken validatie en quarantaine (lokaal geïmplementeerd in B02)
 
 Een record met een ontbrekend bron-ID gaat in quarantaine. Bij dubbele bron-ID's binnen één import van dezelfde dataset gaan alle records met dat ID in quarantaine; er wordt geen willekeurig exemplaar gekozen.
 
@@ -179,8 +179,45 @@ Bij een noemer van nul wordt 'niet van toepassing' gerapporteerd. Het aantal ext
 
 - Liander: peildatum en stabiliteit van `OBJECTID` tussen publicaties blijven open. De volledige laag, querylimieten en paginering zijn met deze selectie niet bewezen.
 - Exacte spanning en materiaal zijn niet beschikbaar als eigen bronveld. Waarden worden niet op basis van aannames ingevuld.
-- Automatische validatie, transformatie, importgedrag en herstel zijn nog niet geïmplementeerd of getest.
+- De afgesproken ID- en lijnstructuurvalidatie is lokaal geïmplementeerd en met vaste tests gecontroleerd. Transformatie, duurzame verwerking, opslag en herstel zijn vervolgwerk. De connector vraagt RD-uitvoer aan, maar valideert de CRS-metadata van het antwoord nog niet afzonderlijk.
 - De bestaande Enexis- en Stedin-proeven betreffen middenspanning; vergelijkbaarheid met de eerste LS-import is niet aangetoond.
 - Voor Enexis en Stedin blijven de datasetgebonden open vragen uit D01 van toepassing.
 
 Deze data is uitsluitend bestemd voor analyse en demonstratie: **geen KLIC en geen informatie voor graafveiligheid**.
+
+## B02 — Lokale Liander-verwerking gecontroleerd op 24 november 2026
+
+### Huidige implementatie en ontwerpafspraken
+
+`LianderConnector` haalt de vaste D02-bbox op met intersects, inSR/outSR 28992, alle attributen, volledige geometrie en sortering op OBJECTID. Het verzoek vraagt maximaal 100 records. Een HTTP-fout, ArcGIS-foutantwoord of gemelde overschrijding van de transferlimiet stopt de aanroep. Paginering is nog te bouwen; deze foutpaden zijn in de huidige tests niet afzonderlijk gesimuleerd.
+
+`LianderAssetMapper` gebruikt mappingversie `liander-lv-v1`. OBJECTID wordt als een geheel 64-bits getal gelezen en als cultuuronafhankelijke tekst bewaard. Iedere geaccepteerde asset krijgt een nieuwe Guid; herkenning tussen importpogingen blijft een open vraag. Operator, dataset, discipline, assettype en spanningsklasse volgen de D02-mapping. Onbekende exacte spanning en materiaal blijven null.
+
+`LianderGeometryMapper` maakt met NetTopologySuite 2.6.0 een MultiLineString met SRID 28992. Alle paden en hun x/y-puntvolgorde blijven behouden. De beschreven controles betreffen de afgesproken lijnstructuur. Bredere topologische controles zijn hiermee niet aangetoond.
+
+`LianderImportProcessor` leest eerst de bron-ID's en keurt alle voorkomens van dubbele ID's af vóór geometrieomzetting. Ontbrekende of ongeldige bron-ID's en onbruikbare geometrieën leveren een QuarantineRecord op. Het record bevat jobId, een 1-gebaseerd recordnummer in het antwoord, sourceRecordId indien beschikbaar en een reasonCode. Geometriefouten bij een dubbel ID krijgen de duplicaatcode. Het resultaat bevat jobId, mappingVersion, gelezen aantal, assets en afkeurmeldingen. Bij volledige verwerking geldt gelezen = assets + quarantaine.
+
+De lokale ontwikkelroute `/dev/liander/sample` gebruikt vast job-ID `00000000-0000-0000-0000-000000000010`. Dit is een controle in geheugen; opslag, een jobworker en koppeling met het fictieve jobsoverzicht zijn vervolgwerk.
+
+### Gecontroleerde resultaten
+
+De ontwikkelaar heeft het live antwoord teruggekoppeld met mappingVersion `liander-lv-v1`, 23 gelezen, 23 geaccepteerd, 0 in quarantaine, countsBalance true en errors []. Eerdere controles op dezelfde proef bevestigden 23 unieke bron-ID's en asset-ID's en de gekozen vaste mappingwaarden. De geometriestap gaf 23 MultiLineStrings met SRID 28992.
+
+De ontwikkelaar meldde 15 geslaagde xUnit-tests, 0 mislukt en 0 overgeslagen. De code staat in `backend/NetUnify.Api.Tests/UnitTest1.cs`. De vaste tests omvatten correcte mapping en padvolgorde, onbekende optionele waarden, ontbrekend/null/ongeldig bron-ID, ontbrekende/lege geometrie, te korte paden, ontbrekende/niet-numerieke/niet-eindige coördinaten, identieke punten, volledige recordafkeur bij één ongeldig pad, dubbele ID's inclusief een ongeldige geometrie, een lege selectie en behoud van volledige geometrie buiten de bbox. Ieder scenario controleert mappingversie en sluitende tellingen. De grensproef bewaart een lijn van 300 meter die aan beide kanten buiten de bbox doorloopt; de selectie door Liander zelf wordt hiermee niet onafhankelijk getest.
+
+### CRS-keuze en referentie voor de volgende stap
+
+Intern wordt RD New (EPSG:28992) gebruikt. Voor kaartuitvoer is afgesproken een kopie te transformeren, met behoud van de interne RD-geometrie. Voor de visualisatie wordt ETRS89 aan WGS84 gelijkgesteld. De transformatiebibliotheek, uitvoering en acceptatietolerantie staan nog open.
+
+De ontwikkelaar controleerde op 24 november in de NSGI-rekentool het volgende punt, zonder hoogte:
+
+| Stelsel | Waarde |
+| --- | --- |
+| RD x / y | 210650 / 467800 meter |
+| ETRS89 breedte | 52.195506749 graden |
+| ETRS89 lengte | 6.201141586 graden |
+| Verwachte volgorde voor kaartuitvoer volgens de gekozen gelijkstelling | [6.201141586, 52.195506749] |
+
+Dit is een extern referentieresultaat voor een toekomstige test. Een eigen geslaagde WGS84-transformatie is hiermee nog niet aangetoond. Eén punt controleert een concrete uitkomst en asvolgorde; het bewijst geen nauwkeurigheid over het hele brongebied.
+
+[NSGI-rekentool](https://www.nsgi.nl/coordinatenstelsels-en-transformaties/tools/online-coordinatentransformatie) · [Geonovum-handreiking voor de gelijkstelling bij visualisatie](https://docs.geostandaarden.nl/crs/def-hr-crs-20250211/)

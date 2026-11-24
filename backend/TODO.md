@@ -6,11 +6,11 @@ Deze planning betreft uitsluitend de backendwerkstroom. Alleen afgeronde en geco
 
 - [x] D01. Voer een kleine bronproef per bron uit en leg formaat, CRS, velden, volledigheid, voorwaarden en open vragen vast. Bevestig een werkende concrete Enexis-bron. Open bronvragen blijven zichtbaar in het datasheet.
 - [x] D02. Kies discipline en bbox voor de eerste import, leg de mapping naar het infoschema vast en beschrijf toetsbare kwaliteitsmaten en bekende hiaten. Bewijs: Liander-LS-selectie met 23 records, handmatige controles en vastgelegde ontwerpkeuzes in het datasheet. Dit is geen voltooide import of automatische validatietest.
-- [ ] D03. Rond de review van backendarchitectuur, infoschema en API-voorstel af. Bevestig open vragen, docent-review en integratieafspraken met de frontend. Alleen de beperkte lokale B01-proef is inmiddels goedgekeurd; dit rond D03 niet als geheel af.
+- [ ] D03. Rond de review van backendarchitectuur, infoschema en API-voorstel af. Bevestig open vragen, docent-review en integratieafspraken met de frontend. De lokale B01- en B02-proeven zijn uitgevoerd; de volledige review staat nog open.
 
 ## Toestemming en eerstvolgende stap
 
-De [lokale B01-proef](docs/b01-jobsproef.md) mag starten vóór afronding van de volledige D03-review. Dit is een beperkte wijziging van de eerdere afspraak om alle featurecode te laten wachten. De frontendbouwer wordt later betrokken. Buiten deze proef blijven de relevante open ontwerp- en reviewvragen eerst te behandelen. De lokale jobsproef is gebouwd en handmatig gecontroleerd. De volgende stap is de relevante D03-reviewpunten behandelen voordat de bronimport wordt uitgebreid.
+De [lokale B01-proef](docs/b01-jobsproef.md) mag starten vóór afronding van de volledige D03-review. Dit is een beperkte wijziging van de eerdere afspraak om alle featurecode te laten wachten. De frontendbouwer wordt later betrokken. Buiten deze proef blijven de relevante open ontwerp- en reviewvragen eerst te behandelen. De lokale jobsproef is gebouwd en handmatig gecontroleerd. Op 24 november zijn RD New als intern CRS, MultiLineString, NetTopologySuite en de transformatierichting besproken en is stapsgewijs doorgegaan met de lokale B02-proef. Die proef is nu gecontroleerd. De volgende stap is de WGS84-transformatie uitwerken en testen tegen het vastgelegde NSGI-referentiepunt; de volledige D03-review blijft open.
 
 ## Backendimplementatie
 
@@ -19,7 +19,7 @@ De [lokale B01-proef](docs/b01-jobsproef.md) mag starten vóór afronding van de
   - [x] Maak het API-project en controleer build en lokale start. Uitvoering door de ontwikkelaar bevestigd.
   - [x] Bouw en controleer het jobs-antwoord volgens het API-contract: fictieve gegevens, vaste sortering, tellingen en lege lijst. HTTP 200 voor gevuld en leeg antwoord bevestigd; fictieve jobs daarna hersteld.
   - [ ] Stem het voorlopige contract af met de frontendwerkstroom en controleer de daadwerkelijke frontendkoppeling.
-- [ ] B02. Bouw de eerste Liander-connector, mappingversie en validatie volgens D02. Test geldige assets, ontbrekende en dubbele bron-ID's, ongeldige geometrie, onbekende optionele waarden en de gebiedsgrens.
+- [x] B02. Bouw de eerste Liander-connector, mappingversie en validatie volgens D02. Test geldige assets, ontbrekende en dubbele bron-ID's, ongeldige geometrie, onbekende optionele waarden en de gebiedsgrens. Bewijs voor de lokale vaste RD-selectie: 23 gelezen/geaccepteerd, 0 in quarantaine en 15 door de ontwikkelaar bevestigde geslaagde tests. De grenscontrole bewijst behoud van volledige geometrie tijdens mapping; intersects wordt aan Liander doorgegeven. WGS84-transformatie, paginering, opslag en duurzame jobuitvoering zijn vervolgwerk.
 - [ ] B03. Voeg de andere twee connectors toe en lever herleidbare assets uit drie bronnen in hetzelfde model. Bevestig eerst passende kabelcategorieën en dekking.
 - [ ] B04. Voeg begrensde, annuleerbare jobs, quarantaine, retry, export en audit toe. Test dubbele verwerking, falen en herstel.
 - [ ] B05. Lever kwaliteit, materiaal-/spanningsmix en dichtheid of vergelijking via de API. Test lege selecties, nulnoemers en onbekende waarden.

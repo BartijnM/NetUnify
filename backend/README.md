@@ -14,7 +14,7 @@ De backend is het serverdeel van NetUnify. Deze ontvangt API-verzoeken en gaat b
 
 ## Huidige fase
 
-D01 en D02 zijn uitgewerkt. De Liander-LS-bronproef bevat een selectie van 23 handmatig onderzochte records. De lokale jobs-API is gebouwd en handmatig gecontroleerd. De bronimport is nog te bouwen.
+D01 en D02 zijn uitgewerkt. De Liander-LS-bronproef bevat een selectie van 23 handmatig onderzochte records. De lokale jobs-API is gebouwd en handmatig gecontroleerd. De lokale B02-proef haalt de vaste Liander-selectie op en verwerkt deze in geheugen tot assets en afkeurmeldingen. De ontwikkelaar bevestigde 23 gelezen, 23 geaccepteerd en 0 in quarantaine, met mappingversie `liander-lv-v1`.
 
 De beperkte lokale B01-proef is gebouwd en handmatig gecontroleerd: één ASP.NET Core Web API-project op .NET 10, met een GET-endpoint dat fictieve jobs teruggeeft. De proef bevat geen database, bronimport, echte jobuitvoering of geïmplementeerde rolbeveiliging. Frontendafstemming volgt later. D03 blijft als volledige review open; deze toestemming betreft alleen de beschreven proef.
 
@@ -32,6 +32,18 @@ dotnet run --project backend/NetUnify.Api/NetUnify.Api.csproj --launch-profile h
 Het gecontroleerde HTTP-profiel luistert op `http://localhost:5216`. GET `http://localhost:5216/api/v1/jobs` geeft drie fictieve jobs met HTTP 200. Stop de applicatie met `Ctrl+C`.
 
 De controles van de lege lijst en het herstel van de fictieve jobs staan in [B01: lokale jobsproef](docs/b01-jobsproef.md).
+
+## Lokale Liander-proef en tests
+
+GET `http://localhost:5216/dev/liander/sample` voert in Development de vaste Liander-bboxquery uit en verwerkt het antwoord in geheugen. Het antwoord bevat een vast fictief job-ID, mappingversie, tellingen, balanscontrole en afkeurmeldingen. De vaste bbox en de uitkomsten staan in het [datasheet](docs/datasheet.md#b02--lokale-liander-verwerking-gecontroleerd-op-24-november-2026). Dit is een ontwikkelcontrole met een live bronaanroep. `/api/v1/jobs` levert nog steeds de afzonderlijke fictieve jobs.
+
+Voer vanuit de reporoot de automatische mapping- en validatietests uit:
+
+```powershell
+dotnet test backend/NetUnify.Api.Tests/NetUnify.Api.Tests.csproj
+```
+
+De ontwikkelaar bevestigde 15 geslaagde tests, 0 mislukt en 0 overgeslagen. De tests gebruiken vaste gegevens en roepen Liander niet aan. De actuele bronquery is afzonderlijk handmatig gecontroleerd. Het interne CRS is RD New (`EPSG:28992`), met NetTopologySuite 2.6.0 en `MultiLineString`. De transformatie naar WGS84 is nog te bouwen en te testen.
 
 ## Voorlopige keuzes
 

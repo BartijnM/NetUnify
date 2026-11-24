@@ -19,7 +19,7 @@ Backend en frontend worden door afzonderlijke ontwikkelaars binnen één repo ui
 
 ## Status en leeswijzer
 
-De documentatie beschrijft het doel en de huidige ontwerpafspraken. D01 en D02 zijn uitgewerkt. De beperkte lokale B01-backendproef is gebouwd en handmatig gecontroleerd met fictieve jobs, inclusief sortering, tellingen, lege lijst en HTTP 200. De volledige D03-review en de afstemming met de frontend zijn nog niet afgerond.
+De documentatie beschrijft het doel en de huidige ontwerpafspraken. D01 en D02 zijn uitgewerkt. De beperkte lokale B01-backendproef is gebouwd en handmatig gecontroleerd met fictieve jobs, inclusief sortering, tellingen, lege lijst en HTTP 200. De lokale B02-proef haalt de vaste Liander-LS-selectie op, mapt naar RD-geometrie en verzamelt afkeurmeldingen. De ontwikkelaar bevestigde 23 geaccepteerde records en 15 geslaagde automatische tests. De WGS84-transformatie, volledige D03-review en frontendafstemming zijn vervolgstappen.
 
 Voor een eerste kennismaking: lees [scope en werkwijze](docs/scope.md), vervolgens de [backendintroductie](backend/README.md) en het [API-contract](docs/api-contract.md). De uitwerking en controles van de eerste bouwstap staan in [B01: lokale jobsproef](backend/docs/b01-jobsproef.md).
 
