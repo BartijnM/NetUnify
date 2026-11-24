@@ -2,7 +2,7 @@
 
 Dit document beschrijft welke berichten backend en frontend beogen uit te wisselen. Een API-contract legt routes, velden en betekenissen vast, zodat beide werkstromen daarop kunnen aansluiten. De gezamenlijke frontendreview is nog niet afgerond.
 
-Voor de beperkte lokale B01-proef is de GET /jobs-antwoordvorm hieronder akkoord. De rest is een voorstel voor het vervolg. Er is nog geen endpoint gebouwd en de rollen uit de routetabel zijn nog niet geïmplementeerd. De proef is uitsluitend lokaal met fictieve gegevens, zonder authenticatie of autorisatie; daarmee is geen productie-API goedgekeurd.
+Voor de beperkte lokale B01-proef is de GET /jobs-antwoordvorm hieronder akkoord. De rest is een voorstel voor het vervolg. GET /api/v1/jobs is lokaal gebouwd en handmatig gecontroleerd. De rollen uit de routetabel zijn voor vervolgimplementatie voorzien. De proef is uitsluitend lokaal met fictieve gegevens, zonder authenticatie of autorisatie; daarmee is geen productie-API goedgekeurd.
 
 Dit contract is een werkdocument. Afspraken kunnen veranderen door review of implementatie. Een wijziging aan velden, typen of gedrag wordt hier bijgewerkt, met reden en gevolgen in de backendvoortgang. Als de frontend ervan afhankelijk wordt, moet die wijziging gezamenlijk worden afgestemd. Routes hieronder beginnen met /api/v1. Tijdstempels zijn ISO 8601 in UTC. OpenAPI-uitwerking volgt tijdens de bouw.
 
@@ -53,9 +53,21 @@ Een job in `items` heeft de volgende velden:
 | `submittedAt` | Aanmaaktijdstip in UTC |
 | `counts` | Object met beschikbare tellingen, of `null` wanneer die nog niet beschikbaar zijn |
 
-DTO betekent data transfer object: een antwoordmodel met deze uitwisselingsvelden, los van eventuele toekomstige opslagtabellen. De interne C#-typen en de concrete fictieve job-ID's worden bij de DTO-stap uitgewerkt; ze zijn hier nog niet definitief vastgesteld.
+DTO betekent data transfer object: een antwoordmodel met deze uitwisselingsvelden, los van eventuele toekomstige opslagtabellen. De lokale proef gebruikt de volgende herzienbare typekeuzes:
 
-Jobs worden gesorteerd op `submittedAt` van nieuw naar oud. `jobId` is de vaste tweede sorteersleutel bij gelijke tijdstempels. De richting van die tweede sortering moet vóór implementatie nog expliciet worden gekozen.
+| JSON-veld | C#-type | JSON-weergave |
+| --- | --- | --- |
+| `jobId` | `Guid` | GUID als tekst |
+| `operator`, `dataset`, `status` | `string` | Tekst |
+| `submittedAt` | `DateTimeOffset` | ISO 8601 met UTC-offset nul; bijvoorbeeld `2026-11-19T10:00:00+00:00` |
+| `counts` | `JobCountsDto?` | Object of `null` |
+| `read`, `accepted`, `quarantined` | `long` | Gehele getallen |
+| `items` | `IReadOnlyList<JobDto>` | Array, ook als deze leeg is |
+| `nextCursor` | `string?` | In de lokale proef altijd `null` |
+
+De DTO's beschrijven de vorm. Statuswaarden, niet-negatieve aantallen en de eindbalans zijn in deze proef handmatig op de fictieve gegevens gecontroleerd; de DTO's dwingen die regels niet zelf af.
+
+Jobs worden gesorteerd op `submittedAt` van nieuw naar oud. `jobId` is de vaste tweede sorteersleutel bij gelijke tijdstempels. De lokale proef gebruikt oplopende `Guid`-sortering via `ThenBy(job => job.JobId)`. Voor de vaste voorbeeldset is de gecontroleerde volgorde `…002`, `…003`, `…001`.
 
 ### Betekenis van tellingen
 
@@ -72,21 +84,21 @@ Een afgeronde lege import heeft drie nullen: `read: 0`, `accepted: 0`, `quaranti
 
 ### Voorbeeld met fictieve gegevens
 
-Dit is een illustratie van de afgesproken antwoordvorm, geen gemeten importresultaat. De voorbeeld-ID is geen definitieve keuze voor het interne ID-type.
+Dit ingekorte voorbeeld toont alleen de eerste van de drie fictieve jobs. Het volledige antwoord bevat drie items en nextCursor null.
 
 ```json
 {
   "items": [
     {
-      "jobId": "demo-job-001",
+      "jobId": "00000000-0000-0000-0000-000000000002",
       "operator": "Liander",
       "dataset": "Liander_Open_Data_Elektra/112",
       "status": "succeeded",
-      "submittedAt": "2026-11-18T09:00:00Z",
+      "submittedAt": "2026-11-19T10:00:00+00:00",
       "counts": {
-        "read": 10,
-        "accepted": 8,
-        "quarantined": 2
+        "read": 0,
+        "accepted": 0,
+        "quarantined": 0
       }
     }
   ],

@@ -14,11 +14,24 @@ De backend is het serverdeel van NetUnify. Deze ontvangt API-verzoeken en gaat b
 
 ## Huidige fase
 
-D01 en D02 zijn uitgewerkt. De Liander-LS-bronproef bevat een selectie van 23 handmatig onderzochte records. Er is nog geen werkende import of API gebouwd en er zijn nog geen implementatietests uitgevoerd.
+D01 en D02 zijn uitgewerkt. De Liander-LS-bronproef bevat een selectie van 23 handmatig onderzochte records. De lokale jobs-API is gebouwd en handmatig gecontroleerd. De bronimport is nog te bouwen.
 
-De beperkte lokale B01-proef is goedgekeurd: één ASP.NET Core Web API-project op .NET 10, met een GET-endpoint dat fictieve jobs teruggeeft. De proef bevat geen database, bronimport, echte jobuitvoering of geïmplementeerde rolbeveiliging. Frontendafstemming volgt later. D03 blijft als volledige review open; deze toestemming betreft alleen de beschreven proef.
+De beperkte lokale B01-proef is gebouwd en handmatig gecontroleerd: één ASP.NET Core Web API-project op .NET 10, met een GET-endpoint dat fictieve jobs teruggeeft. De proef bevat geen database, bronimport, echte jobuitvoering of geïmplementeerde rolbeveiliging. Frontendafstemming volgt later. D03 blijft als volledige review open; deze toestemming betreft alleen de beschreven proef.
 
-Volgens de gemelde SDK-controle zijn SDK 9.0.319 en 10.0.400 geïnstalleerd. Vanuit de backendmap is .NET 10 als geselecteerde SDK gemeld. Een projectbuild en lokale start zijn nog niet gecontroleerd. Startinstructies worden toegevoegd zodra ze zijn uitgevoerd en geverifieerd.
+Op de laptop zijn SDK 8.0.428, 9.0.319 en 10.0.400 aangetroffen; 10.0.400 werd geselecteerd. De projectbuild, lokale start en HTTP-controles zijn door de ontwikkelaar uitgevoerd en bevestigd.
+
+## Lokaal starten
+
+Voer vanuit de reporoot uit met een .NET 10 SDK:
+
+```powershell
+dotnet build backend/NetUnify.Api/NetUnify.Api.csproj
+dotnet run --project backend/NetUnify.Api/NetUnify.Api.csproj --launch-profile http
+```
+
+Het gecontroleerde HTTP-profiel luistert op `http://localhost:5216`. GET `http://localhost:5216/api/v1/jobs` geeft drie fictieve jobs met HTTP 200. Stop de applicatie met `Ctrl+C`.
+
+De controles van de lege lijst en het herstel van de fictieve jobs staan in [B01: lokale jobsproef](docs/b01-jobsproef.md).
 
 ## Voorlopige keuzes
 

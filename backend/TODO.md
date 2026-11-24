@@ -10,14 +10,14 @@ Deze planning betreft uitsluitend de backendwerkstroom. Alleen afgeronde en geco
 
 ## Toestemming en eerstvolgende stap
 
-De [lokale B01-proef](docs/b01-jobsproef.md) mag starten vóór afronding van de volledige D03-review. Dit is een beperkte wijziging van de eerdere afspraak om alle featurecode te laten wachten. De frontendbouwer wordt later betrokken. Buiten deze proef blijven de relevante open ontwerp- en reviewvragen eerst te behandelen. Er is nog geen implementatie gereed.
+De [lokale B01-proef](docs/b01-jobsproef.md) mag starten vóór afronding van de volledige D03-review. Dit is een beperkte wijziging van de eerdere afspraak om alle featurecode te laten wachten. De frontendbouwer wordt later betrokken. Buiten deze proef blijven de relevante open ontwerp- en reviewvragen eerst te behandelen. De lokale jobsproef is gebouwd en handmatig gecontroleerd. De volgende stap is de relevante D03-reviewpunten behandelen voordat de bronimport wordt uitgebreid.
 
 ## Backendimplementatie
 
-- [ ] B01. Maak de eerste integratieslice met een jobs-endpoint en fictieve data in het afgesproken DTO. De lokale backendproef is toegestaan; frontendkoppeling en afstemming volgen later.
+- [ ] B01. Maak de eerste integratieslice met een jobs-endpoint en fictieve data in het afgesproken DTO. De lokale backendproef is gebouwd en handmatig gecontroleerd; frontendkoppeling en afstemming volgen later.
   - [x] Voorbereiding: SDK-inventarisatie en selectie van .NET 10 gemeld; projectindeling, jobsvelden, antwoordverpakking, tellingen en scheiding controller/service/DTO besproken en akkoord voor de lokale proef.
-  - [ ] Maak het API-project en controleer build en lokale start.
-  - [ ] Bouw en controleer het jobs-antwoord volgens het API-contract: fictieve gegevens, vaste sortering, tellingen en lege lijst.
+  - [x] Maak het API-project en controleer build en lokale start. Uitvoering door de ontwikkelaar bevestigd.
+  - [x] Bouw en controleer het jobs-antwoord volgens het API-contract: fictieve gegevens, vaste sortering, tellingen en lege lijst. HTTP 200 voor gevuld en leeg antwoord bevestigd; fictieve jobs daarna hersteld.
   - [ ] Stem het voorlopige contract af met de frontendwerkstroom en controleer de daadwerkelijke frontendkoppeling.
 - [ ] B02. Bouw de eerste Liander-connector, mappingversie en validatie volgens D02. Test geldige assets, ontbrekende en dubbele bron-ID's, ongeldige geometrie, onbekende optionele waarden en de gebiedsgrens.
 - [ ] B03. Voeg de andere twee connectors toe en lever herleidbare assets uit drie bronnen in hetzelfde model. Bevestig eerst passende kabelcategorieën en dekking.

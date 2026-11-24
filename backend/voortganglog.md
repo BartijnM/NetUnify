@@ -39,3 +39,17 @@ Er is expliciet toestemming gegeven om deze beperkte lokale proef te bouwen terw
 De documentatie is bijgewerkt met uitleg voor nieuwe lezers en met onderscheid tussen gecontroleerde feiten, huidige ontwerpafspraken, voorstellen, open vragen en nog te bouwen gedrag. Ontwerpkeuzes mogen tijdens de ontwikkeling worden herzien; reden, gevolgen en eventuele wijzigingen aan API-afspraken moeten dan worden bijgewerkt. De historische voortgang blijft als momentopname behouden.
 
 Er zijn bij deze stap alleen documenten aangepast. Het API-project, endpoint en tests zijn nog niet aangemaakt. De volgende uitvoerstap is het lege API-project voorbereiden en vervolgens build en lokale start controleren, steeds in kleine stappen.
+
+## 24 november 2026 — Lokale B01-jobsproef gecontroleerd
+
+De lokale ASP.NET Core Web API op .NET 10 is gebouwd. JobsController, JobService, JobDto, JobCountsDto en JobsResponseDto zijn toegevoegd en de service is met AddScoped geregistreerd. De klasse JobsController staat in Controllers/JobController.cs. De bestaande WeatherForecast-voorbeeldbestanden zijn aanwezig.
+
+De laptopcontrole trof SDK 8.0.428, 9.0.319 en 10.0.400 aan; 10.0.400 werd geselecteerd. De ontwikkelaar bevestigde build, lokale start op http://localhost:5216 en het WeatherForecast-antwoord. Daarna zijn de drie fictieve jobs met het afgesproken antwoordobject en HTTP 200 gecontroleerd.
+
+De herzienbare typekeuzes zijn Guid voor jobId, DateTimeOffset in UTC voor submittedAt, string voor operator/dataset/status en long voor tellingen. Counts is een optioneel JobCountsDto. Het antwoord gebruikt IReadOnlyList<JobDto> en een optionele tekstcursor. Bij gelijke submittedAt is jobId oplopend gekozen om de volgorde vast te maken. De gecontroleerde volgorde is …002, …003, …001. De jobs-API is hiermee de huidige lokale contractbasis; gezamenlijke frontendafstemming volgt.
+
+De JSON-controle bevestigt counts null bij de wachtende job, 0/0/0 bij de fictieve afgeronde lege verwerking en 23/21/2 bij de andere afgeronde job. De balans 23 = 21 + 2 sluit. Deze waarden zijn demonstratiegegevens. Op 24 november bevestigde de ontwikkelaar ook de tijdelijk lege lijst met HTTP 200. Daarna zijn de fictieve jobs en sortering hersteld en opnieuw gecontroleerd.
+
+De controles zijn handmatig door de ontwikkelaar uitgevoerd en in de chat gemeld. Voor deze documentatie-update is de actuele broncode gelezen. De twee B01-subtaken voor project/build/start en jobs-antwoord zijn afgevinkt. De readmes, proefbeschrijving, architectuur en gedeelde scope en het API-contract zijn bijgewerkt. Historische logregels behouden hun toenmalige stand.
+
+B01 blijft open voor frontendafstemming en daadwerkelijke frontendkoppeling. D03 blijft open voor de volledige review. De volgende stap is de relevante D03-reviewpunten behandelen voor verdere bronimport. Er zijn nog geen automatische tests, bronimport, database, echte jobuitvoering of rolbeveiliging aangetoond. De casusgrens blijft geen KLIC en geen informatie voor graafveiligheid.

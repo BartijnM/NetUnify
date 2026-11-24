@@ -2,71 +2,85 @@
 
 ## Doel en status
 
-Deze proef is de eerste kleine bouwstap van de backend. Een zelfstandig draaiende API moet een lijst fictieve importjobs teruggeven. Daardoor kunnen HTTP-afhandeling en antwoordmodellen worden gecontroleerd zonder frontend, database of bronimport. Een importjob is een opdracht om brongegevens te verwerken; de voorbeeldjobs voeren zelf geen werk uit.
+De lokale jobsproef is gebouwd in `backend/NetUnify.Api/` op .NET 10. GET `/api/v1/jobs` geeft vaste fictieve importjobs terug. Een job stelt een verwerkingsopdracht voor; de voorbeeldgegevens worden rechtstreeks in `JobService` samengesteld.
 
-De beperkte lokale proef is op 18 november 2026 goedgekeurd. De keuzes hieronder zijn de huidige basis en mogen tijdens de ontwikkeling met onderbouwing worden aangepast. B01 is nog niet gebouwd. De volledige D03-review en de latere frontendafstemming blijven open.
+De beperkte proef is op 18 november 2026 goedgekeurd. De ontwikkelaar heeft build, lokale start, antwoordvelden, sortering, tellingen en HTTP 200 handmatig gecontroleerd. Op 24 november zijn ook de lege lijst met HTTP 200 en het herstel van de fictieve jobs bevestigd. Automatische tests zijn niet uitgevoerd. B01 als volledige integratieslice en de D03-review staan open.
 
-## Beschikbare omgeving
-
-De handmatig doorgegeven SDK-inventarisatie bevat .NET SDK 9.0.319 en 10.0.400. Vanuit de backendmap is .NET 10 als geselecteerde SDK gemeld. De huidige keuze is ASP.NET Core Web API op .NET 10. De SDK bevat de hulpmiddelen om C#-projecten te maken en te bouwen; alleen een runtime is daarvoor niet voldoende. De eerste projectbuild moet de bruikbaarheid van deze omgeving nog aantonen.
-
-## Projectindeling en verantwoordelijkheden
+## Projectindeling
 
 ```text
-backend/
-├── NetUnify.Api/         nog aan te maken API-project
-│   ├── Controllers/     HTTP-afhandeling: JobsController
-│   ├── Services/        fictieve jobs en sortering: JobService
-│   └── Contracts/       DTO's voor de JSON-antwoorden
-├── docs/                technische backenddocumentatie
-├── README.md
-├── TODO.md
-└── voortganglog.md
+backend/NetUnify.Api/
+├── Controllers/JobController.cs   klasse JobsController, HTTP-afhandeling
+├── Services/JobService.cs         vaste fictieve jobs en sortering
+├── Contracts/JobDto.cs            JobDto en JobCountsDto
+├── Contracts/JobsResponseDto.cs   items en nextCursor
+└── Program.cs                    controller- en serviceregistratie
 ```
 
-Dit schema toont de geplande indeling, geen reeds aangemaakte bestanden. Eén API-project houdt deze eerste stap overzichtelijk. De frontend heeft geen projectafhankelijkheid op deze applicatie nodig en kan later via HTTP aansluiten.
+De standaard WeatherForecast-controller en het bijbehorende model zijn nog aanwezig.
 
-Een controller ontvangt het HTTP-verzoek en bepaalt het HTTP-antwoord. Een service levert de benodigde gegevens en bevat de logica die niet bij HTTP hoort. Een DTO (data transfer object) beschrijft de gegevens die over de API-grens gaan. Bijvoorbeeld: GET /api/v1/jobs komt bij JobsController binnen, die jobs bij JobService opvraagt en ze in de afgesproken antwoordvorm met HTTP 200 teruggeeft. Geen van deze stappen start een echte import.
+Een controller ontvangt een HTTP-verzoek en levert het HTTP-antwoord. De service levert de gegevens en sortering. De DTO's beschrijven de uitwisselingsvelden. Bij GET `/api/v1/jobs` roept `JobsController` de `JobService` aan en geeft `JobsResponseDto` via `Ok(...)` terug. De service is met `AddScoped` geregistreerd.
 
-## Functionele grens
+## Omgeving en lokale start
 
-De proef levert alleen GET /api/v1/jobs met vaste fictieve gegevens, een gesorteerde lijst en de afgesproken lege-lijstweergave. De velden, tellingen en JSON-voorbeelden staan op één gedeelde plek: het [API-contract](../../docs/api-contract.md).
+Op de laptop zijn SDK 8.0.428, 9.0.319 en 10.0.400 aangetroffen. SDK 10.0.400 werd geselecteerd. De ontwikkelaar heeft de projectbuild en de lokale start bevestigd.
 
-De proef bouwt geen POST /jobs, database, Liander-connector, mapping, worker, retry, export of rolbeveiliging. Analyst/Admin zijn beoogde rollen voor het vervolg; ze worden met deze proef nog niet afgedwongen. De proef wordt uitsluitend lokaal uitgevoerd. Hosting en beveiligde beschikbaarstelling zijn latere stappen en zijn niet met deze toestemming vrijgegeven.
+Voer vanuit de reporoot uit:
 
-De eerste proef is zelfstandig te controleren. De frontendkoppeling volgt later en blijft onderdeel van de totale B01-integratieslice. Een geslaagde lokale proef is daarom geen bewijs dat de frontendintegratie gereed is.
+```powershell
+dotnet build backend/NetUnify.Api/NetUnify.Api.csproj
+dotnet run --project backend/NetUnify.Api/NetUnify.Api.csproj --launch-profile http
+```
 
-## Huidige antwoordafspraken
+Het HTTP-profiel luistert op `http://localhost:5216`. Open `/api/v1/jobs` voor het antwoord. Controleer de status vanuit een tweede terminal:
 
-- Antwoordobject met `items` en `nextCursor`; de kleine voorbeeldset past op één pagina.
-- Jobsvelden: `jobId`, `operator`, `dataset`, `status`, `submittedAt` en `counts`.
-- Nieuwste `submittedAt` eerst; `jobId` als vaste tweede sorteersleutel. De richting van die tweede sortering wordt nog gekozen.
-- Geen jobs geeft HTTP 200 met `items: []` en `nextCursor: null`.
-- `counts: null` betekent nog geen beschikbare tellingen. Een beschikbaar counts-object bevat `read`, `accepted` en `quarantined`.
-- Tijdens verwerking of na vroegtijdige stop zijn tellingen voorlopig. Na volledige verwerking geldt `read = accepted + quarantined`.
-- Een volledig verwerkte lege import heeft drie nullen, geen ontbrekend counts-object.
+```powershell
+(Invoke-WebRequest -Uri 'http://localhost:5216/api/v1/jobs').StatusCode
+```
 
-Deze afspraken zijn nog niet door implementatie bevestigd. Filters, echte paginering, de C#-typen en de precieze fictieve dataset worden in gerichte vervolgstappen uitgewerkt. Nieuwe keuzes worden niet stilzwijgend als al goedgekeurd behandeld.
+De gecontroleerde status is `200`. Stop de API met `Ctrl+C` voordat deze opnieuw wordt gestart na een codewijziging.
 
-## Geplande uitvoering en gerichte controles
+## Antwoord en typekeuzes
 
-De uitvoering verloopt in kleine stappen. Na iedere stap wordt de uitkomst gecontroleerd voordat de volgende code wordt toegevoegd. Het API-project wordt niet automatisch aangemaakt door deze documentatiestap.
+De JSON-velden en betekenissen staan in het [gedeelde API-contract](../../docs/api-contract.md). De huidige C#-keuzes zijn `Guid` voor job-ID, `DateTimeOffset` met UTC-offset nul voor submittedAt, `string` voor operator/dataset/status en `long` voor de drie tellingen. `JobCountsDto?` maakt onbekende tellingen expliciet met `null`. De antwoordlijst gebruikt `IReadOnlyList<JobDto>` en `nextCursor` gebruikt `string?`.
 
-| Stap | Zelf te controleren | Waarom |
-| --- | --- | --- |
-| Project aanmaken | Project staat onder backend/NetUnify.Api en richt zich op .NET 10 | Voorkomt een verkeerde locatie of doelversie |
-| Eerste build en lokale start | Build slaagt; applicatie start en geeft de lokale luister-URL | Toont aan dat project en omgeving samenwerken |
-| DTO's en fictieve jobs | JSON heeft de afgesproken velden, UTC-tijden, statuswaarden en counts-betekenis | Controleert het bericht dat later door de frontend wordt gebruikt |
-| Jobs-endpoint | GET /api/v1/jobs geeft HTTP 200 en het antwoordobject | Controleert de koppeling van controller, service en DTO |
-| Sortering | Nieuwste job eerst; gelijke tijden geven een voorspelbare volgorde | Voorkomt een wisselende volgorde bij herhaalde aanvragen |
-| Lege lijst | HTTP 200 met lege items en nextCursor null | Onderscheidt geen gegevens van een verzoekfout |
-| Tellingen | Wachtend is null; afgerond leeg is 0/0/0; volledig verwerkt heeft sluitende aantallen | Voorkomt verwarring tussen onbekend, nul en definitieve aantallen |
-| Latere frontendintegratie | Frontend verwerkt het afgesproken antwoord en de lege toestand | Toont pas dan aan dat de volledige integratieslice werkt |
+Deze keuzes zijn herzienbaar. De types zijn gekozen om identificatie, tijdstip en onbekende tellingen expliciet te maken. De kleine fictieve dataset past op één pagina; `nextCursor` is `null`. Filters en echte cursorpaginering zijn vervolgvragen.
 
-De concrete commando's, bestanden en codefragmenten volgen per uitvoerstap. Uitgevoerde controles en resultaten worden daarna in het voortganglog vastgelegd; deze tabel bevat nog geen behaalde resultaten.
+## Gecontroleerde fictieve dataset
 
-## Open punten buiten of na de proef
+Alle drie jobs gebruiken operator `Liander` en dataset `Liander_Open_Data_Elektra/112`. De ID's hieronder hebben prefix `00000000-0000-0000-0000-` en vaste tijden op 19 november 2026 in UTC.
 
-De volledige D03-review, docent-review, frontendafstemming, authenticatie, hosting, database, API-bbox-CRS, opslag-CRS, mappingversie en herkenning van assets tussen bronpublicaties blijven open. De bronvragen en mapping staan in het [datasheet](datasheet.md). De bredere architectuur staat in het [architectuurdocument](architectuur.md).
+| Volgorde | ID-suffix | Tijd UTC | Status | read / accepted / quarantined |
+| --- | --- | --- | --- | --- |
+| 1 | `000000000002` | 10:00 | `succeeded` | 0 / 0 / 0 |
+| 2 | `000000000003` | 10:00 | `queued` | `counts: null` |
+| 3 | `000000000001` | 09:00 | `succeeded` | 23 / 21 / 2 |
+
+De sortering is submittedAt aflopend, gevolgd door jobId oplopend via `ThenBy`. De voorbeeldgegevens controleren beide sorteersleutels. `counts: null` betekent onbekend; 0/0/0 betekent een bekende lege verwerking. De overige afgeronde voorbeeldjob heeft sluitende tellingen, 23 = 21 + 2. Deze aantallen zijn fictief.
+
+De controle van de lege lijst gebruikte tijdelijk `return Array.Empty<JobDto>();` in `JobService.GetJobs()`. Na herstart is HTTP 200 met `items: []` en `nextCursor: null` bevestigd. Daarna is het oorspronkelijke return-statement met sortering hersteld, de API herstart en de volgorde …002, …003, …001 opnieuw bevestigd.
+
+## Uitgevoerde controles
+
+| Controle | Vastgelegde uitkomst |
+| --- | --- |
+| Project en doelversie | Aanwezig onder backend/NetUnify.Api; net10.0 |
+| Build en lokale start | Succes door ontwikkelaar bevestigd |
+| Eerste HTTP-verzoek | WeatherForecast geeft records terug |
+| Jobs-antwoord | Drie items, afgesproken velden en nextCursor null |
+| HTTP-status jobs | 200 bevestigd via Invoke-WebRequest |
+| Sortering | Nieuwste tijd eerst; bij gelijke tijd jobId oplopend |
+| Tellingen | Onbekend null, bekende lege verwerking 0/0/0, eindbalans 23 = 21 + 2 |
+| Lege lijst | items [], nextCursor null en HTTP 200 bevestigd |
+| Herstel na lege-lijstcontrole | Drie jobs terug in de afgesproken volgorde |
+| Frontendkoppeling | Nog uit te voeren |
+
+De HTTP- en inhoudscontroles zijn handmatig door de ontwikkelaar uitgevoerd en in de chat teruggekoppeld. De broncode is voor deze documentatie-update gelezen. Statuswaarden en tellingen zijn op de voorbeeldgegevens gecontroleerd; afdwingen van de regels bij toekomstige invoer vraagt verdere implementatie.
+
+## Functionele grens en vervolg
+
+De lokale proef bevat fictieve jobs. Bronimport, opslag, echte jobuitvoering, authenticatie en rolbeveiliging zijn vervolgonderdelen. De volgende stap is de relevante D03-reviewpunten behandelen voor verdere bronimport. Frontendafstemming en de daadwerkelijke koppeling zijn nog onderdeel van B01. Hosting en Azure SQL blijven voorstellen.
+
+Open ontwerpvragen staan in het [architectuurdocument](architectuur.md), bronvragen in het [datasheet](datasheet.md) en integratievragen in de [gedeelde scope](../../docs/scope.md).
 
 **Liggingsdata voor analyse en demonstratie. Geen KLIC en geen informatie voor graafveiligheid.**

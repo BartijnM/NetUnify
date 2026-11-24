@@ -48,13 +48,15 @@ D03 omvat onder meer de beoordeling van opslag-CRS, transformatie, assetherkenni
 
 ## Eerste bouwstap: lokale B01-proef
 
-De huidige keuze is één ASP.NET Core Web API-project op .NET 10 onder `backend/NetUnify.Api/`. Deze indeling houdt de eerste versie overzichtelijk en onafhankelijk van de frontend.
+De lokale proef is gebouwd als één ASP.NET Core Web API-project op .NET 10 onder `backend/NetUnify.Api/`. Deze indeling houdt de eerste versie overzichtelijk en onafhankelijk van de frontend.
 
 | Onderdeel | Rol in de proef |
 | --- | --- |
 | `JobsController` | Ontvangt GET /api/v1/jobs en geeft HTTP-status en antwoord terug |
 | `JobService` | Levert en sorteert vaste fictieve jobs |
 | DTO's onder `Contracts/` | Beschrijven de afgesproken JSON-velden; DTO betekent data transfer object |
+
+De klasse `JobsController` staat momenteel in `Controllers/JobController.cs`. `JobService` wordt in `Program.cs` via `AddScoped` geregistreerd. De DTO's staan in `Contracts/JobDto.cs` en `Contracts/JobsResponseDto.cs`.
 
 Bijvoorbeeld: een GET-verzoek komt bij de controller binnen. De controller vraagt de service om jobs en retourneert het DTO-antwoord met HTTP 200. De controller bevat geen Liander-query, mapping of databasecode. Later kan de bron van jobgegevens veranderen zonder dat de antwoordvorm noodzakelijk hoeft te veranderen.
 
