@@ -43,7 +43,7 @@ Verwerking gebruikt begrensde concurrency, annuleerbare workers en veilige aggre
 
 De gekozen Liander-LS-selectie, veldmapping, handmatige controles en quarantaine- en kwaliteitsregels staan in het [backenddatasheet](datasheet.md#d02--eerste-import-liander-laagspanning). Dit zijn huidige ontwerpkeuzes; de volledige ontwerpreview en implementatie zijn nog niet afgerond. Bij nieuwe inzichten kunnen de keuzes met onderbouwing worden herzien. Volledige kabelgeometrie wordt als MultiLineString gebruikt; onbekende spanning, materiaal en peildatum blijven expliciet onbekend.
 
-RD New als intern CRS, MultiLineString, NetTopologySuite en mappingversie liander-lv-v1 zijn inmiddels gekozen voor de lokale Liander-proef. Voor de eerste visualisatieproef is een afzonderlijke ProjNET-transformer gebouwd. D03 omvat nog databaseopslag, verdere beoordeling van de transformatienauwkeurigheid en API-koppeling, assetherkenning tussen publicaties, API-bbox-CRS, jobuitvoering en integratie met de frontend.
+RD New als intern CRS, MultiLineString, NetTopologySuite en mappingversie liander-lv-v1 zijn inmiddels gekozen voor de lokale Liander-proef. Voor de eerste visualisatieproef is een afzonderlijke ProjNET-transformer gebouwd. D03 omvat nog databaseopslag, verdere beoordeling van de transformatienauwkeurigheid en het publieke assets-endpoint, assetherkenning tussen publicaties, API-bbox-CRS, jobuitvoering en integratie met de frontend.
 
 
 ## Eerste bouwstap: lokale B01-proef
@@ -64,7 +64,7 @@ Deze proef bouwt nog geen connector, database, jobworker of rolbeveiliging. De r
 
 ## Lokale B02-verwerking
 
-De ontwikkelroute `/dev/liander/sample` in Program.cs is beschikbaar in Development. De route haalt via LianderConnector de vaste D02-selectie op, verwerkt deze via LianderImportProcessor en toont mappingversie, tellingen, balans en afkeurmeldingen. De HTTP-client is met AddHttpClient geregistreerd.
+De ontwikkelroute `/dev/liander/sample` in Program.cs is beschikbaar in Development. De route haalt via LianderConnector de vaste D02-selectie op, verwerkt deze via LianderImportProcessor en toont mappingversie, tellingen, balans, afkeurmeldingen, een coördinatenvoorbeeld en de GeoJSON-collectie. De HTTP-client is met AddHttpClient geregistreerd.
 
 | Onderdeel | Huidige verantwoordelijkheid |
 | --- | --- |
@@ -75,11 +75,13 @@ De ontwikkelroute `/dev/liander/sample` in Program.cs is beschikbaar in Developm
 | Models/Asset.cs | Uniform assetmodel in geheugen |
 | Models/ImportResult.cs | Resultaat met jobId, mappingVersion, read, assets en quarantaine |
 | NetUnify.Api.Tests/UnitTest1.cs | 15 vaste xUnit-scenario's voor mapping, afkeur, tellingen en geometriebehoud |
-| Mapping/RdToWgs84Transformer.cs | Afzonderlijke RD-naar-WGS84-uitvoerkopie met ProjNET 2.1.0; nog niet aangesloten op de API |
+| Mapping/RdToWgs84Transformer.cs | RD-naar-WGS84-uitvoerkopie met ProjNET 2.1.0, gebruikt door de Development-routes |
 | NetUnify.Api.Tests/RdToWgs84TransformerTests.cs | 3 tests voor referentiepunt, geometriebehoud, meerdere paden en verkeerd invoer-SRID |
+| Mapping/AssetGeoJsonMapper.cs | Bouwt een FeatureCollection met WGS84-MultiLineStrings, asset-ID en drie bronverwijzingsvelden |
+| NetUnify.Api.Tests/AssetGeoJsonMapperTest.cs | Klasse AssetGeoJsonMapperTests met 2 tests voor lege collectie en geserialiseerde featurestructuur |
 
 De ontwikkelaar bevestigde de live verwerking van 23 records en 15 geslaagde automatische tests. Details, beperkingen en het NSGI-referentiepunt staan in het [datasheet](datasheet.md#b02--lokale-liander-verwerking-gecontroleerd-op-24-november-2026).
 
-De interne geometrie gebruikt NetTopologySuite 2.6.0, MultiLineString en RD New. Voor kaartuitvoer is een getransformeerde kopie afgesproken, met ETRS89 gelijkgesteld aan WGS84 voor visualisatie. De afzonderlijke transformer gebruikt ProjNET 2.1.0 met een WKT-definitie en een zevenparameter-datumtransformatie naar WGS84. Deze benadering is geen volledige RDNAPTRANS-implementatie. De ontwikkelaar bevestigde inmiddels 18 geslaagde tests, waaronder het NSGI-referentiepunt binnen een voorlopige tolerantie van 0.00001 graad per as. Verdere nauwkeurigheidscontrole en aansluiting op de API volgen. Het JSON van de ontwikkelroute bevat alleen een verwerkingssamenvatting; GeoJSON-uitvoer is vervolgwerk.
+De interne geometrie gebruikt NetTopologySuite 2.6.0, MultiLineString en RD New. Voor kaartuitvoer is een getransformeerde kopie afgesproken, met ETRS89 gelijkgesteld aan WGS84 voor visualisatie. De afzonderlijke transformer gebruikt ProjNET 2.1.0 met een WKT-definitie en een zevenparameter-datumtransformatie naar WGS84. Deze benadering is geen volledige RDNAPTRANS-implementatie. De ontwikkelaar bevestigde inmiddels 20 geslaagde tests, waaronder het NSGI-referentiepunt binnen een voorlopige tolerantie van 0.00001 graad per as. Verdere nauwkeurigheidscontrole en het publieke assets-endpoint volgen. `/dev/liander/sample` bevat de GeoJSON-collectie in het samenvattingsantwoord. `/dev/liander/geojson` levert rechtstreeks dezelfde collectievorm met `application/geo+json`. Beide routes halen per aanroep opnieuw brondata op en gebruiken hetzelfde vaste voorbeeld-job-ID. De ontwikkelaar bevestigde HTTP 200 en 23 MultiLineString-features bij 23 geaccepteerde assets; de routes zelf hebben nog geen automatische HTTP-integratietests.
 
 De lokale proef gebruikt een vast fictief job-ID en genereert nieuwe asset-ID's per aanroep. Het fictieve jobs-endpoint blijft een afzonderlijke B01-proef. Duurzame jobs, opslag, herhaalbaarheid tussen pogingen, snapshots, export en autorisatie vragen vervolgimplementatie. De volledige D03-review blijft open.

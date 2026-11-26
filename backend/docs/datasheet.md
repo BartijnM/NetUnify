@@ -6,7 +6,7 @@ Een bbox is een rechthoek met west-, zuid-, oost- en noordgrens. Voor andere bro
 
 | Bron | Onderzochte categorie | Status |
 | --- | --- | --- |
-| Liander | Laagspanningskabel, laag 112 | Eerste importbron; D01/D02 handmatig onderzocht. Lokale B02-verwerking met 23 records en 15 automatische tests gecontroleerd; daarnaast 3 tests voor de afzonderlijke WGS84-transformer. |
+| Liander | Laagspanningskabel, laag 112 | Eerste importbron; D01/D02 handmatig onderzocht. Lokale B02-verwerking met 23 records en 15 automatische tests gecontroleerd; daarnaast 3 transformatietests en 2 GeoJSON-mappertests. Lokale GeoJSON-uitvoer met 23 features gecontroleerd. |
 | Enexis | Middenspanningskabel, provinciale publicatie, laag 2 | Werkende bronquery en drie records gecontroleerd; dekking en peildatum nog open. |
 | Stedin | Middenspanningsverbindingen, shapefile | Bestandsstructuur, CRS, geometriesoort en drie DBF-rijen gecontroleerd; bron-ID en herpublicatievoorwaarden nog open. |
 
@@ -132,10 +132,10 @@ Dit gebied is 200 × 200 meter. De volledige geometrie van geselecteerde kabels 
 | `voltageClass` | `LV` | Afgeleid uit Laagspanningskabel; interne code gekozen |
 | `voltageKv` | `null` | Geen veld voor exacte spanning in het gecontroleerde veldschema |
 | `material` | `null` | Geen materiaalveld in het gecontroleerde veldschema |
-| `geometry` | Alle `geometry.paths` naar één `MultiLineString`, met behoud van paden en puntvolgorde | RD-mapping geïmplementeerd en getest; afzonderlijke WGS84-transformer getest, API-/GeoJSON-koppeling nog open |
+| `geometry` | Alle `geometry.paths` naar één `MultiLineString`, met behoud van paden en puntvolgorde | RD-mapping geïmplementeerd en getest; WGS84-transformer en GeoJSON-mapper getest; lokale Development-routes gecontroleerd, publiek assets-endpoint nog open |
 | `jobId` | Verwijzing naar de verwerkende importjob | Context uit de toekomstige import, geen bronveld |
 
-Voor de toekomstige GeoJSON-uitvoer is WGS84 met lengtegraad vóór breedtegraad afgesproken. Intern is RD New (EPSG:28992) gekozen, met NetTopologySuite MultiLineString. Databaseopslag staat nog open. De afzonderlijke WGS84-transformer gebruikt ProjNET 2.1.0 en is met drie tests gecontroleerd; API-/GeoJSON-koppeling en verdere nauwkeurigheidscontrole volgen nog. Het bron-CRS van deze bbox bepaalt niet automatisch het bbox-CRS in het API-contract.
+Voor de lokale GeoJSON-uitvoer is WGS84 met lengtegraad vóór breedtegraad afgesproken. Intern is RD New (EPSG:28992) gekozen, met NetTopologySuite MultiLineString. Databaseopslag staat nog open. De afzonderlijke WGS84-transformer gebruikt ProjNET 2.1.0 en is met drie tests gecontroleerd; GeoJSON is via Development-routes beschikbaar; het publieke assets-endpoint en verdere nauwkeurigheidscontrole volgen nog. Het bron-CRS van deze bbox bepaalt niet automatisch het bbox-CRS in het API-contract.
 
 `Shape__Length` is beschikbaar als bronattribuut, maar krijgt in het huidige Asset-model geen eigen veld. Voor latere lengteberekeningen moet een geschikte metrische of geodetische methode worden gekozen en de gebiedsselectie expliciet worden gemaakt.
 
@@ -179,7 +179,7 @@ Bij een noemer van nul wordt 'niet van toepassing' gerapporteerd. Het aantal ext
 
 - Liander: peildatum en stabiliteit van `OBJECTID` tussen publicaties blijven open. De volledige laag, querylimieten en paginering zijn met deze selectie niet bewezen.
 - Exacte spanning en materiaal zijn niet beschikbaar als eigen bronveld. Waarden worden niet op basis van aannames ingevuld.
-- De afgesproken ID- en lijnstructuurvalidatie is lokaal geïmplementeerd en met vaste tests gecontroleerd. API-/GeoJSON-koppeling van de inmiddels afzonderlijk geteste transformer, verdere nauwkeurigheidscontrole, duurzame verwerking, opslag en herstel zijn vervolgwerk. De connector vraagt RD-uitvoer aan, maar valideert de CRS-metadata van het antwoord nog niet afzonderlijk.
+- De afgesproken ID- en lijnstructuurvalidatie is lokaal geïmplementeerd en met vaste tests gecontroleerd. Het publieke assets-endpoint, verdere nauwkeurigheidscontrole, duurzame verwerking, opslag en herstel zijn vervolgwerk. De connector vraagt RD-uitvoer aan, maar valideert de CRS-metadata van het antwoord nog niet afzonderlijk.
 - De bestaande Enexis- en Stedin-proeven betreffen middenspanning; vergelijkbaarheid met de eerste LS-import is niet aangetoond.
 - Voor Enexis en Stedin blijven de datasetgebonden open vragen uit D01 van toepassing.
 
@@ -256,6 +256,27 @@ De test gebruikt een **voorlopige tolerantie van 0.00001 graad per as**. Beide a
 
 De ontwikkelaar bevestigde na verwijdering van de tijdelijke diagnostische `Assert.Fail` **18 geslaagde tests, 0 mislukt en 0 overgeslagen**: 15 Liander-testgevallen en 3 transformatietests. Voor deze documentatie-update zijn de broncode en tests gelezen; de suite en live bronaanroep zijn niet opnieuw uitgevoerd.
 
-De transformer is nog niet aangesloten op `Program.cs`, een API-route of GeoJSON-uitvoer. De interne assets blijven in RD en de mappingversie blijft `liander-lv-v1`. Lege geometrieën, null en niet-eindige coördinaten zijn nog niet afzonderlijk getest voor de transformer. API-koppeling, meerdere onafhankelijke referentiepunten en verdere nauwkeurigheidsbeoordeling zijn vervolgwerk. D03 en B01 blijven open voor hun bestaande review- en integratiepunten.
+Bij de eerste puntcontrole was de transformer nog niet aangesloten op een route; de latere GeoJSON-koppeling staat hieronder. De interne assets blijven in RD en de mappingversie blijft `liander-lv-v1`. Lege geometrieën, null en niet-eindige coördinaten zijn nog niet afzonderlijk getest voor de transformer. Het publieke assets-endpoint, meerdere onafhankelijke referentiepunten en verdere nauwkeurigheidsbeoordeling zijn vervolgwerk. D03 en B01 blijven open voor hun bestaande review- en integratiepunten.
 
 **Geen KLIC en geen informatie voor graafveiligheid.**
+
+## 26 november 2026 — Lokale GeoJSON-uitvoer gecontroleerd
+
+`Mapping/AssetGeoJsonMapper.cs` bouwt een FeatureCollection uit de geaccepteerde assets. Elke asset wordt één Feature met `id` als tekstuele AssetId en properties `sourceRecordId`, `operator` en `sourceDataset`. De geometrie is altijd een MultiLineString; paden bevatten punten met lengtegraad vóór breedtegraad. De mapper gebruikt RdToWgs84Transformer en laat de interne RD-geometrie behouden. Er wordt geen apart `crs`-veld toegevoegd. De properties vormen een lokale proef en zijn nog geen volledig publiek assets-contract.
+
+De Development-routes in Program.cs gebruiken de vaste Liander-selectie:
+
+| Route | Antwoord | Door de ontwikkelaar gecontroleerd |
+| --- | --- | --- |
+| GET /dev/liander/sample | Samenvatting plus maximaal één coördinatenvoorbeeld en `geoJson` | 23 gelezen, 23 geaccepteerd, 0 in quarantaine, countsBalance true, 23 features en uitsluitend MultiLineStrings |
+| GET /dev/liander/geojson | Rechtstreeks FeatureCollection met application/geo+json | HTTP 200, het inhoudstype en een geparseerde collectie met 23 features |
+
+Het getoonde bronrecord 7836116 bevat RD-punt [210744.728,467904.438999999]. De uitvoerkopie gaf [6.202543945587595,52.19643579782879]. Dit toont de aansluiting van de transformer op echte brondata; dit punt is niet onafhankelijk op nauwkeurigheid gecontroleerd.
+
+Iedere routeaanroep haalt de bron opnieuw op en genereert nieuwe asset-ID's. De aantallen zijn momentopnamen. Het vaste voorbeeld-job-ID blijft 00000000-0000-0000-0000-000000000010. De routes staan binnen de Development-controle; bereikbaarheid buiten Development is niet afzonderlijk getest. Opslag, duurzame export en een publiek /api/v1/assets-endpoint zijn niet gebouwd.
+
+De klasse AssetGeoJsonMapperTests staat lokaal in `NetUnify.Api.Tests/AssetGeoJsonMapperTest.cs` (bestandsnaam in enkelvoud). De twee vaste tests controleren de lege collectie en een geserialiseerde feature met ID, bronproperties, twee paden, puntaantallen, het referentiepunt en behoud van de oorspronkelijke RD-geometrie. Ze gebruiken web-JSON-instellingen voor camelCase. De ontwikkelaar bevestigde na toevoeging van de GeoJSON-route opnieuw **20 geslaagde tests, 0 mislukt en 0 overgeslagen**: 15 Liander-, 3 transformatie- en 2 mappertestgevallen. Dit zijn geen automatische HTTP-integratietests.
+
+De PowerShell-controle parseerde de collectie na expliciete omzetting van de antwoordinhoud naar tekst. De controle ondersteunt zowel tekst als UTF-8-bytes; de daadwerkelijke oorspronkelijke .NET-inhoudstype-regel is niet teruggekoppeld. De lokale start- en controle-instructies staan in de backend-README. Voor deze documentatie-update zijn Program.cs, de mapper en de twee mappertests gelezen; tests en live routes zijn niet opnieuw uitgevoerd.
+
+Voorstel voor vervolg: de CRS-metadata van het bronantwoord expliciet valideren voordat RD-mapping plaatsvindt. De voorlopige transformatietolerantie en de beperking tot één onafhankelijk referentiepunt blijven gelden. D03, B01 en I03 blijven als volledige taken open. **Geen KLIC en geen informatie voor graafveiligheid.**

@@ -35,7 +35,7 @@ De controles van de lege lijst en het herstel van de fictieve jobs staan in [B01
 
 ## Lokale Liander-proef en tests
 
-GET `http://localhost:5216/dev/liander/sample` voert in Development de vaste Liander-bboxquery uit en verwerkt het antwoord in geheugen. Het antwoord bevat een vast fictief job-ID, mappingversie, tellingen, balanscontrole en afkeurmeldingen. De vaste bbox en de uitkomsten staan in het [datasheet](docs/datasheet.md#b02--lokale-liander-verwerking-gecontroleerd-op-24-november-2026). Dit is een ontwikkelcontrole met een live bronaanroep. `/api/v1/jobs` levert nog steeds de afzonderlijke fictieve jobs.
+GET `http://localhost:5216/dev/liander/sample` voert in Development de vaste Liander-bboxquery uit en verwerkt het antwoord in geheugen. Het antwoord bevat een vast fictief job-ID, mappingversie, tellingen, balanscontrole, afkeurmeldingen, maximaal één coördinatenvoorbeeld onder `coordinateSamples` en de GeoJSON-collectie onder `geoJson`. De vaste bbox en de uitkomsten staan in het [datasheet](docs/datasheet.md#b02--lokale-liander-verwerking-gecontroleerd-op-24-november-2026). Dit is een ontwikkelcontrole met een live bronaanroep. `/api/v1/jobs` levert nog steeds de afzonderlijke fictieve jobs.
 
 Voer vanuit de reporoot de automatische mapping-, validatie- en transformatietests uit:
 
@@ -43,7 +43,7 @@ Voer vanuit de reporoot de automatische mapping-, validatie- en transformatietes
 dotnet test backend/NetUnify.Api.Tests/NetUnify.Api.Tests.csproj
 ```
 
-De ontwikkelaar bevestigde op 26 november 2026 18 geslaagde tests, 0 mislukt en 0 overgeslagen: 15 voor Liander en 3 voor de transformatie. De tests gebruiken vaste gegevens en roepen Liander niet aan. De bronquery is eerder afzonderlijk handmatig gecontroleerd. Het interne CRS is RD New (`EPSG:28992`), met NetTopologySuite 2.6.0 en `MultiLineString`. `Mapping/RdToWgs84Transformer.cs` gebruikt ProjNET 2.1.0 en maakt een nieuwe MultiLineString met SRID 4326, lengtegraad vóór breedtegraad. De oorspronkelijke RD-geometrie blijft behouden. Het NSGI-referentiepunt, meerdere paden en een verkeerd invoer-SRID zijn getest. De voorlopige tolerantie is 0.00001 graad per as. De zevenparameterbenadering is geen volledige RDNAPTRANS-implementatie; nauwkeurigheid over het hele gebied is niet aangetoond. De transformer is nog niet aangesloten op een route of GeoJSON-uitvoer. Zie het [datasheet](docs/datasheet.md#26-november-2026--eerste-transformatiecontrole) voor waarden en beperkingen.
+De ontwikkelaar bevestigde op 26 november 2026 20 geslaagde tests, 0 mislukt en 0 overgeslagen: 15 voor Liander, 3 voor de transformatie en 2 voor de GeoJSON-mapper. De tests gebruiken vaste gegevens en roepen Liander niet aan. De bronquery is eerder afzonderlijk handmatig gecontroleerd. Het interne CRS is RD New (`EPSG:28992`), met NetTopologySuite 2.6.0 en `MultiLineString`. `Mapping/RdToWgs84Transformer.cs` gebruikt ProjNET 2.1.0 en maakt een nieuwe MultiLineString met SRID 4326, lengtegraad vóór breedtegraad. De oorspronkelijke RD-geometrie blijft behouden. Het NSGI-referentiepunt, meerdere paden en een verkeerd invoer-SRID zijn getest. De voorlopige tolerantie is 0.00001 graad per as. De zevenparameterbenadering is geen volledige RDNAPTRANS-implementatie; nauwkeurigheid over het hele gebied is niet aangetoond. De transformer is via `Mapping/AssetGeoJsonMapper.cs` aangesloten op de twee Liander-ontwikkelroutes. GET `http://localhost:5216/dev/liander/geojson` geeft rechtstreeks een FeatureCollection terug met inhoudstype `application/geo+json`. De ontwikkelaar bevestigde HTTP 200 en 23 MultiLineString-features, gelijk aan de 23 geaccepteerde assets. Beide routes staan binnen de Development-controle; het publieke `/api/v1/assets`-endpoint is nog niet gebouwd. Zie het [datasheet](docs/datasheet.md#26-november-2026--eerste-transformatiecontrole) voor waarden en beperkingen.
 
 ## Voorlopige keuzes
 
@@ -52,3 +52,25 @@ Azure App Service en Azure SQL zijn voorstellen. Frontendtechniek, hosting, auth
 **Geen KLIC en geen informatie voor graafveiligheid.**
 
 Bron voor de opdracht is de aangeleverde Educom-casus NetUnify, p. 1–2.
+
+## GeoJSON lokaal controleren
+
+Laat de API draaien en voer in een tweede PowerShell-terminal uit:
+
+```powershell
+$response = Invoke-WebRequest -Uri 'http://localhost:5216/dev/liander/geojson'
+$jsonText = if ($response.Content -is [byte[]]) {
+    [System.Text.Encoding]::UTF8.GetString($response.Content)
+} else {
+    [string]$response.Content
+}
+$geoJson = ConvertFrom-Json -InputObject $jsonText
+[pscustomobject]@{
+    StatusCode = $response.StatusCode
+    ContentType = $response.Headers['Content-Type'] -join ', '
+    Type = $geoJson.type
+    FeatureCount = @($geoJson.features | Where-Object { $null -ne $_ }).Count
+}
+```
+
+Gecontroleerd door de ontwikkelaar: HTTP 200, `application/geo+json`, `FeatureCollection` en 23 features. De expliciete tekstomzetting verwerkt zowel tekst als eventuele UTF-8-bytes; het oorspronkelijke PowerShell-inhoudstype is niet teruggekoppeld. Iedere routeaanroep haalt de bron opnieuw op, waardoor aantallen kunnen veranderen. Assets krijgen per verwerking nieuwe GUID's; dit is nog geen stabiele gepubliceerde dataset of duurzame export.

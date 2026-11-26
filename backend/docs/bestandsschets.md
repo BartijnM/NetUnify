@@ -10,7 +10,7 @@ De genoemde locaties vallen onder backend/NetUnify.Api/.
 
 | Bestand of bestanden | Eenvoudige verantwoordelijkheid | Stand |
 | --- | --- | --- |
-| Program.cs | Start de applicatie, registreert services en koppelt routes | Aanwezig; bevat ook de lokale Liander-controleroute |
+| Program.cs | Start de applicatie, registreert services en koppelt routes | Aanwezig; bevat de lokale Liander-sample- en GeoJSON-route |
 | Controllers/JobController.cs | JobsController ontvangt HTTP-verzoeken en geeft jobgegevens terug | Aanwezig voor GET /api/v1/jobs |
 | Services/JobService.cs | Levert het jobsoverzicht; later ook aanspreekpunt voor echte jobgegevens | Levert nu vaste fictieve jobs |
 | Services/ImportService.cs | Kiest op basis van de bron de connector en processor en verzamelt het resultaat | Voorstel voor gezamenlijke aansturing |
@@ -19,7 +19,8 @@ De genoemde locaties vallen onder backend/NetUnify.Api/.
 | Connectors/EnexisConnector.cs | Haalt JSON op uit de onderzochte provinciale ArcGIS-publicatie | Voorstel; dekking en categorie nog afstemmen |
 | Connectors/StedinConnector.cs | Downloadt en leest de samenhangende shapefile-bestanden | Voorstel; concrete leesbibliotheek nog kiezen |
 | Mapping/LianderAssetMapper.cs en LianderGeometryMapper.cs | Lezen bronvelden, controleren lijnpaden en maken uniforme assets | Aanwezig |
-| Mapping/RdToWgs84Transformer.cs | Maakt met ProjNET 2.1.0 een WGS84-kopie van RD-lijnpaden | Aanwezig en afzonderlijk getest; nog niet aangesloten op de API |
+| Mapping/RdToWgs84Transformer.cs | Maakt met ProjNET 2.1.0 een WGS84-kopie van RD-lijnpaden | Aanwezig, getest en aangesloten op Development-routes via AssetGeoJsonMapper |
+| Mapping/AssetGeoJsonMapper.cs | Maakt een FeatureCollection van assets met een getransformeerde geometriekopie | Aanwezig; twee mappertests en lokale HTTP-uitvoer gecontroleerd |
 | Mapping/EnexisAssetMapper.cs en EnexisGeometryMapper.cs | Zetten Enexis-velden en geometrie om naar hetzelfde assetmodel | Voorstel |
 | Mapping/StedinAssetMapper.cs en StedinGeometryMapper.cs | Zetten Stedin-attributen en geometrie om naar hetzelfde assetmodel | Voorstel |
 | Services/LianderImportProcessor.cs | Controleert dubbele bron-ID's en verzamelt assets en afkeurmeldingen | Aanwezig |
@@ -66,12 +67,13 @@ Bijvoorbeeld, een toekomstige Liander-job laat de worker via ImportService de Li
 | Lokale ingang | Huidige aanroepketen | Uitkomst |
 | --- | --- | --- |
 | GET /api/v1/jobs | JobsController → JobService → JobsResponseDto | Drie vaste fictieve jobs |
-| GET /dev/liander/sample | Route in Program.cs → LianderConnector → LianderImportProcessor → Liander-mappers | Samenvatting van de echte bronverwerking met mappingversie, tellingen en afkeurmeldingen |
+| GET /dev/liander/sample | Route in Program.cs → LianderConnector → LianderImportProcessor → Liander-mappers; daarna AssetGeoJsonMapper → RdToWgs84Transformer | Samenvatting, coördinatenvoorbeeld en GeoJSON-collectie |
+| GET /dev/liander/geojson | Route in Program.cs → LianderConnector → LianderImportProcessor → Liander-mappers; daarna AssetGeoJsonMapper → RdToWgs84Transformer | Rechtstreeks FeatureCollection met application/geo+json |
 
 De Liander-controleroute gebruikt een vast voorbeeld-job-ID. Het fictieve jobsoverzicht en de live bronverwerking zijn op dit moment afzonderlijke controles. Echte jobplanning, statusopslag en de koppeling via worker en ImportService volgen later.
 
 ## Gedeelde afspraken
 
-Alle bronnen gaan naar hetzelfde Asset-model. Iedere bron krijgt eigen lees- en mappingregels, een mappingversie en herleidbare bron-ID's. Intern is RD New met MultiLineString gekozen. RdToWgs84Transformer maakt al een afzonderlijke uitvoerkopie met SRID 4326 en lengtegraad vóór breedtegraad. De ontwikkelaar bevestigde drie transformatietests en 18 geslaagde tests in totaal. De verbinding met een API-route en GeoJSON-kaartuitvoer volgt nog; de transformer maakt nog geen deel uit van de aanroepketens hierboven. De opslagkeuze en manier van jobuitvoering worden verder uitgewerkt tijdens de review.
+Alle bronnen gaan naar hetzelfde Asset-model. Iedere bron krijgt eigen lees- en mappingregels, een mappingversie en herleidbare bron-ID's. Intern is RD New met MultiLineString gekozen. RdToWgs84Transformer maakt al een afzonderlijke uitvoerkopie met SRID 4326 en lengtegraad vóór breedtegraad. De ontwikkelaar bevestigde drie transformatietests, twee GeoJSON-mappertests en 20 geslaagde tests in totaal. De transformer maakt via AssetGeoJsonMapper deel uit van de twee Development-routes hierboven. Een kaartclient en het publieke assets-endpoint zijn nog niet gekoppeld. De opslagkeuze en manier van jobuitvoering worden verder uitgewerkt tijdens de review.
 
 Het [gegevensoverzicht](gegevensoverzicht.md) beschrijft de gegevens. Het [datasheet](datasheet.md) bevat bronfeiten en controles. De [architectuur](architectuur.md) bevat de verdere ontwerpvragen.

@@ -56,7 +56,7 @@ GET /dev/liander/sample gaf bij de laatste door de ontwikkelaar uitgevoerde cont
 | countsBalance | true | Gelezen aantal is gelijk aan geaccepteerd plus afgekeurd |
 | errors | [] | Leeg afkeuroverzicht |
 
-Het endpoint toont deze samenvatting. De assets uit de vorige tabel worden intern opgebouwd. Een latere live aanroep kan andere aantallen opleveren wanneer de bron verandert.
+Het endpoint toont deze samenvatting en inmiddels ook `coordinateSamples` en `geoJson`. De assets uit de vorige tabel worden intern opgebouwd. Een latere live aanroep kan andere aantallen opleveren wanneer de bron verandert.
 
 ## Exacte inhoud van de huidige jobs
 
@@ -114,4 +114,4 @@ Deze tabel beschrijft de beoogde rol van echte importjobs. Het huidige jobsoverz
 
 ## Wat kan nu worden getoond?
 
-De lokale Liander-proef toont de route van bronverzoek naar mapping, validatie en een resultaat met tellingen en afkeurmeldingen. Het afzonderlijke jobs-endpoint toont hoe de frontend straks een jobsoverzicht kan ontvangen. Automatische tests controleren de huidige mapping- en afkeurregels en de afzonderlijke RD-naar-WGS84-transformer. De ontwikkelaar bevestigde 18 geslaagde tests. De transformer maakt een nieuwe MultiLineString met SRID 4326, met behoud van de oorspronkelijke RD-geometrie. Het NSGI-punt valt binnen de voorlopige tolerantie van 0.00001 graad per as. Deze uitvoerkopie is nog niet aangesloten op de API en wordt door het controle-endpoint nog niet getoond. Opslag, duurzame jobuitvoering, de andere connectors en kaartuitvoer zijn volgende uitbreidingen.
+De lokale Liander-proef toont de route van bronverzoek naar mapping, validatie en een resultaat met tellingen en afkeurmeldingen. Het afzonderlijke jobs-endpoint toont hoe de frontend straks een jobsoverzicht kan ontvangen. Automatische tests controleren de huidige mapping- en afkeurregels en de afzonderlijke RD-naar-WGS84-transformer. De ontwikkelaar bevestigde 20 geslaagde tests, waaronder twee voor de GeoJSON-mapper. De transformer maakt een nieuwe MultiLineString met SRID 4326, met behoud van de oorspronkelijke RD-geometrie. Het NSGI-punt valt binnen de voorlopige tolerantie van 0.00001 graad per as. AssetGeoJsonMapper maakt hiermee GeoJSON: iedere geaccepteerde asset wordt één Feature met asset-ID, sourceRecordId, operator, sourceDataset en MultiLineString-geometrie. `/dev/liander/sample` toont deze collectie onder `geoJson`; `/dev/liander/geojson` geeft haar rechtstreeks terug met application/geo+json. De ontwikkelaar bevestigde HTTP 200, 23 features bij 23 geaccepteerde assets en uitsluitend MultiLineStrings. Opslag, duurzame jobuitvoering, de andere connectors, het publieke assets-endpoint en aansluiting op een kaartclient zijn volgende uitbreidingen.

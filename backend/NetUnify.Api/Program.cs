@@ -37,6 +37,37 @@ if (app.Environment.IsDevelopment())
         var result = NetUnify.Api.Services.LianderImportProcessor.Process(
             features, jobId);
 
+        var coordinateSamples = result.Assets.Take(1)
+            .Select(asset =>
+            {
+                var projected =
+                    NetUnify.Api.Mapping.RdToWgs84Transformer.ToWgs84(
+                        asset.Geometry);
+
+                var rdPoint = asset.Geometry.Coordinate;
+                var wgs84Point = projected.Coordinate;
+
+                return new
+                {
+                    asset.SourceRecordId,
+                    rd = new
+                    {
+                        srid = asset.Geometry.SRID,
+                        coordinates = new[] { rdPoint.X, rdPoint.Y }
+                    },
+                    wgs84 = new
+                    {
+                        srid = projected.SRID,
+                        coordinates = new[] { wgs84Point.X, wgs84Point.Y }
+                    }
+                };
+            })
+            .ToArray();
+
+        var geoJson =
+            NetUnify.Api.Mapping.AssetGeoJsonMapper.CreateFeatureCollection(
+                result.Assets);
+
         return Results.Ok(new
         {
             result.JobId,
@@ -49,8 +80,29 @@ if (app.Environment.IsDevelopment())
             },
             countsBalance =
                 result.Read == result.Assets.Count + result.Quarantine.Count,
-            errors = result.Quarantine
+            errors = result.Quarantine,
+            coordinateSamples,
+            geoJson
         });
+    });
+
+    app.MapGet("/dev/liander/geojson", async (
+        NetUnify.Api.Connectors.LianderConnector connector,
+        CancellationToken cancellationToken) =>
+    {
+        var features = await connector.GetFeaturesAsync(cancellationToken);
+        var jobId = Guid.Parse("00000000-0000-0000-0000-000000000010");
+
+        var result = NetUnify.Api.Services.LianderImportProcessor.Process(
+            features, jobId);
+
+        var geoJson =
+            NetUnify.Api.Mapping.AssetGeoJsonMapper.CreateFeatureCollection(
+                result.Assets);
+
+        return Results.Json(
+            geoJson,
+            contentType: "application/geo+json");
     });
 }
 
