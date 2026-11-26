@@ -4,7 +4,7 @@
 
 De lokale jobsproef is gebouwd in `backend/NetUnify.Api/` op .NET 10. GET `/api/v1/jobs` geeft vaste fictieve importjobs terug. Een job stelt een verwerkingsopdracht voor; de voorbeeldgegevens worden rechtstreeks in `JobService` samengesteld.
 
-De beperkte proef is op 18 november 2026 goedgekeurd. De ontwikkelaar heeft build, lokale start, antwoordvelden, sortering, tellingen en HTTP 200 handmatig gecontroleerd. Op 24 november zijn ook de lege lijst met HTTP 200 en het herstel van de fictieve jobs bevestigd. Automatische tests zijn niet uitgevoerd. B01 als volledige integratieslice en de D03-review staan open.
+De beperkte proef is op 18 november 2026 goedgekeurd. De ontwikkelaar heeft build, lokale start, antwoordvelden, sortering, tellingen en HTTP 200 handmatig gecontroleerd. Op 24 november zijn ook de lege lijst met HTTP 200 en het herstel van de fictieve jobs bevestigd. Voor het jobs-endpoint zijn geen automatische tests aanwezig; de huidige 18 automatische tests betreffen de Liander-verwerking en de afzonderlijke coördinatentransformatie. B01 als volledige integratieslice en de D03-review staan open.
 
 ## Projectindeling
 

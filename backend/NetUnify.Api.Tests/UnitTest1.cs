@@ -12,6 +12,7 @@ public sealed class LianderImportProcessorTests
         Guid.Parse("00000000-0000-0000-0000-000000000010");
 
     [Fact]
+    // Test die controleert of een geldig record correct wordt verwerkt en dat de mapping en paden behouden blijven.
     public void ValidRecordPreservesMappingAndPaths()
     {
         var result = Process("""
@@ -88,6 +89,7 @@ public sealed class LianderImportProcessorTests
     }
 
     [Fact]
+    // Test die controleert of dubbele OBJECTID's correct worden afgewezen voordat de geometrie wordt gemapt.
     public void AllDuplicateIdsAreRejectedBeforeGeometryMapping()
     {
         var result = Process("""
@@ -123,6 +125,7 @@ public sealed class LianderImportProcessorTests
     }
 
     [Fact]
+    // Test die controleert of een record met meerdere paden correct wordt verwerkt en dat de mapping behouden blijft.
     public void OneInvalidPathRejectsTheWholeRecord()
     {
         var result = Process("""
@@ -146,6 +149,7 @@ public sealed class LianderImportProcessorTests
     }
 
     [Fact]
+    // Test die controleert of een lege selectie correct wordt verwerkt en dat de tellingen nul zijn.
     public void EmptySelectionHasZeroCounts()
     {
         var result = Process("[]");
@@ -156,6 +160,7 @@ public sealed class LianderImportProcessorTests
     }
 
     [Fact]
+    // Test die controleert of de mapping geometrie behoudt buiten de selectie bbox.
     public void MappingPreservesGeometryOutsideTheSelectionBbox()
     {
         var result = Process("""

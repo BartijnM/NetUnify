@@ -120,7 +120,7 @@ Een lege lijst betekent 'succesvol opgehaald, geen jobs'. Een fout tijdens het v
 ## Nog af te stemmen in D03
 
 - Bbox-CRS en asvolgorde per endpoint. De RD-bbox uit de backendbronproef wordt niet zonder afspraak als API-bbox gebruikt.
-- DTO's en null-semantiek buiten de lokale B01-proef; filters, pagineringslimieten, cursors en mappingversie. De hieronder beschreven jobs-antwoordvorm is al akkoord voor de proef.
+- DTO's en null-semantiek buiten de lokale B01-proef; filters, pagineringslimieten, cursors en mappingversie. De hierboven beschreven jobs-antwoordvorm is al akkoord voor de proef.
 - Authenticatiestroom, origin/CORS of proxy en de koppeling van de eerste jobs-slice.
 - De D02-keuzes voor Liander staan in het [backenddatasheet](../backend/docs/datasheet.md#d02--eerste-import-liander-laagspanning). Ze betekenen geen afgeronde gezamenlijke contractreview.
 

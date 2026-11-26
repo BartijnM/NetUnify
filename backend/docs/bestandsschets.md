@@ -19,6 +19,7 @@ De genoemde locaties vallen onder backend/NetUnify.Api/.
 | Connectors/EnexisConnector.cs | Haalt JSON op uit de onderzochte provinciale ArcGIS-publicatie | Voorstel; dekking en categorie nog afstemmen |
 | Connectors/StedinConnector.cs | Downloadt en leest de samenhangende shapefile-bestanden | Voorstel; concrete leesbibliotheek nog kiezen |
 | Mapping/LianderAssetMapper.cs en LianderGeometryMapper.cs | Lezen bronvelden, controleren lijnpaden en maken uniforme assets | Aanwezig |
+| Mapping/RdToWgs84Transformer.cs | Maakt met ProjNET 2.1.0 een WGS84-kopie van RD-lijnpaden | Aanwezig en afzonderlijk getest; nog niet aangesloten op de API |
 | Mapping/EnexisAssetMapper.cs en EnexisGeometryMapper.cs | Zetten Enexis-velden en geometrie om naar hetzelfde assetmodel | Voorstel |
 | Mapping/StedinAssetMapper.cs en StedinGeometryMapper.cs | Zetten Stedin-attributen en geometrie om naar hetzelfde assetmodel | Voorstel |
 | Services/LianderImportProcessor.cs | Controleert dubbele bron-ID's en verzamelt assets en afkeurmeldingen | Aanwezig |
@@ -71,6 +72,6 @@ De Liander-controleroute gebruikt een vast voorbeeld-job-ID. Het fictieve jobsov
 
 ## Gedeelde afspraken
 
-Alle bronnen gaan naar hetzelfde Asset-model. Iedere bron krijgt eigen lees- en mappingregels, een mappingversie en herleidbare bron-ID's. Intern is RD New met MultiLineString gekozen. De transformatie voor GeoJSON-kaartuitvoer volgt nog. De opslagkeuze en manier van jobuitvoering worden verder uitgewerkt tijdens de review.
+Alle bronnen gaan naar hetzelfde Asset-model. Iedere bron krijgt eigen lees- en mappingregels, een mappingversie en herleidbare bron-ID's. Intern is RD New met MultiLineString gekozen. RdToWgs84Transformer maakt al een afzonderlijke uitvoerkopie met SRID 4326 en lengtegraad vóór breedtegraad. De ontwikkelaar bevestigde drie transformatietests en 18 geslaagde tests in totaal. De verbinding met een API-route en GeoJSON-kaartuitvoer volgt nog; de transformer maakt nog geen deel uit van de aanroepketens hierboven. De opslagkeuze en manier van jobuitvoering worden verder uitgewerkt tijdens de review.
 
 Het [gegevensoverzicht](gegevensoverzicht.md) beschrijft de gegevens. Het [datasheet](datasheet.md) bevat bronfeiten en controles. De [architectuur](architectuur.md) bevat de verdere ontwerpvragen.

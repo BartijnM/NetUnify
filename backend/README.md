@@ -18,7 +18,7 @@ D01 en D02 zijn uitgewerkt. De Liander-LS-bronproef bevat een selectie van 23 ha
 
 De beperkte lokale B01-proef is gebouwd en handmatig gecontroleerd: één ASP.NET Core Web API-project op .NET 10, met een GET-endpoint dat fictieve jobs teruggeeft. De proef bevat geen database, bronimport, echte jobuitvoering of geïmplementeerde rolbeveiliging. Frontendafstemming volgt later. D03 blijft als volledige review open; deze toestemming betreft alleen de beschreven proef.
 
-Op de laptop zijn SDK 8.0.428, 9.0.319 en 10.0.400 aangetroffen; 10.0.400 werd geselecteerd. De projectbuild, lokale start en HTTP-controles zijn door de ontwikkelaar uitgevoerd en bevestigd.
+Historisch zijn op de laptop SDK 8.0.428, 9.0.319 en 10.0.400 aangetroffen. Op de huidige pc zijn op 26 november 2026 SDK 9.0.319 en 10.0.400 aangetroffen; vanuit de repo wordt 10.0.400 geselecteerd. De projectbuild, lokale start en HTTP-controles zijn eerder door de ontwikkelaar uitgevoerd en bevestigd.
 
 ## Lokaal starten
 
@@ -37,13 +37,13 @@ De controles van de lege lijst en het herstel van de fictieve jobs staan in [B01
 
 GET `http://localhost:5216/dev/liander/sample` voert in Development de vaste Liander-bboxquery uit en verwerkt het antwoord in geheugen. Het antwoord bevat een vast fictief job-ID, mappingversie, tellingen, balanscontrole en afkeurmeldingen. De vaste bbox en de uitkomsten staan in het [datasheet](docs/datasheet.md#b02--lokale-liander-verwerking-gecontroleerd-op-24-november-2026). Dit is een ontwikkelcontrole met een live bronaanroep. `/api/v1/jobs` levert nog steeds de afzonderlijke fictieve jobs.
 
-Voer vanuit de reporoot de automatische mapping- en validatietests uit:
+Voer vanuit de reporoot de automatische mapping-, validatie- en transformatietests uit:
 
 ```powershell
 dotnet test backend/NetUnify.Api.Tests/NetUnify.Api.Tests.csproj
 ```
 
-De ontwikkelaar bevestigde 15 geslaagde tests, 0 mislukt en 0 overgeslagen. De tests gebruiken vaste gegevens en roepen Liander niet aan. De actuele bronquery is afzonderlijk handmatig gecontroleerd. Het interne CRS is RD New (`EPSG:28992`), met NetTopologySuite 2.6.0 en `MultiLineString`. De transformatie naar WGS84 is nog te bouwen en te testen.
+De ontwikkelaar bevestigde op 26 november 2026 18 geslaagde tests, 0 mislukt en 0 overgeslagen: 15 voor Liander en 3 voor de transformatie. De tests gebruiken vaste gegevens en roepen Liander niet aan. De bronquery is eerder afzonderlijk handmatig gecontroleerd. Het interne CRS is RD New (`EPSG:28992`), met NetTopologySuite 2.6.0 en `MultiLineString`. `Mapping/RdToWgs84Transformer.cs` gebruikt ProjNET 2.1.0 en maakt een nieuwe MultiLineString met SRID 4326, lengtegraad vóór breedtegraad. De oorspronkelijke RD-geometrie blijft behouden. Het NSGI-referentiepunt, meerdere paden en een verkeerd invoer-SRID zijn getest. De voorlopige tolerantie is 0.00001 graad per as. De zevenparameterbenadering is geen volledige RDNAPTRANS-implementatie; nauwkeurigheid over het hele gebied is niet aangetoond. De transformer is nog niet aangesloten op een route of GeoJSON-uitvoer. Zie het [datasheet](docs/datasheet.md#26-november-2026--eerste-transformatiecontrole) voor waarden en beperkingen.
 
 ## Voorlopige keuzes
 
