@@ -68,12 +68,13 @@ De ontwikkelroute `/dev/liander/sample` in Program.cs is beschikbaar in Developm
 
 | Onderdeel | Huidige verantwoordelijkheid |
 | --- | --- |
-| Connectors/LianderConnector.cs | Vaste ArcGIS-query en controle op HTTP-/bronfout en afgekapt antwoord |
+| Connectors/LianderConnector.cs | Vaste ArcGIS-query en controle op HTTP-/bronfout, afgekapt antwoord en CRS-metadata voor het uitlezen van features |
 | Mapping/LianderAssetMapper.cs | Bron-ID, vaste assetkenmerken en mappingversie liander-lv-v1 |
 | Mapping/LianderGeometryMapper.cs | Lijnstructuurcontroles en MultiLineString in RD met SRID 28992 |
 | Services/LianderImportProcessor.cs | Alle dubbele ID's afkeuren, assets mappen en quarantaine verzamelen |
 | Models/Asset.cs | Uniform assetmodel in geheugen |
 | Models/ImportResult.cs | Resultaat met jobId, mappingVersion, read, assets en quarantaine |
+| NetUnify.Api.Tests/LianderConnectorTests.cs | 14 vaste HTTP-scenario's voor CRS-acceptatie, afkeur en bruikbaarheid van teruggegeven features |
 | NetUnify.Api.Tests/UnitTest1.cs | 15 vaste xUnit-scenario's voor mapping, afkeur, tellingen en geometriebehoud |
 | Mapping/RdToWgs84Transformer.cs | RD-naar-WGS84-uitvoerkopie met ProjNET 2.1.0, gebruikt door de Development-routes |
 | NetUnify.Api.Tests/RdToWgs84TransformerTests.cs | 3 tests voor referentiepunt, geometriebehoud, meerdere paden en verkeerd invoer-SRID |
@@ -82,6 +83,8 @@ De ontwikkelroute `/dev/liander/sample` in Program.cs is beschikbaar in Developm
 
 De ontwikkelaar bevestigde de live verwerking van 23 records en 15 geslaagde automatische tests. Details, beperkingen en het NSGI-referentiepunt staan in het [datasheet](datasheet.md#b02--lokale-liander-verwerking-gecontroleerd-op-24-november-2026).
 
-De interne geometrie gebruikt NetTopologySuite 2.6.0, MultiLineString en RD New. Voor kaartuitvoer is een getransformeerde kopie afgesproken, met ETRS89 gelijkgesteld aan WGS84 voor visualisatie. De afzonderlijke transformer gebruikt ProjNET 2.1.0 met een WKT-definitie en een zevenparameter-datumtransformatie naar WGS84. Deze benadering is geen volledige RDNAPTRANS-implementatie. De ontwikkelaar bevestigde inmiddels 20 geslaagde tests, waaronder het NSGI-referentiepunt binnen een voorlopige tolerantie van 0.00001 graad per as. Verdere nauwkeurigheidscontrole en het publieke assets-endpoint volgen. `/dev/liander/sample` bevat de GeoJSON-collectie in het samenvattingsantwoord. `/dev/liander/geojson` levert rechtstreeks dezelfde collectievorm met `application/geo+json`. Beide routes halen per aanroep opnieuw brondata op en gebruiken hetzelfde vaste voorbeeld-job-ID. De ontwikkelaar bevestigde HTTP 200 en 23 MultiLineString-features bij 23 geaccepteerde assets; de routes zelf hebben nog geen automatische HTTP-integratietests.
+De interne geometrie gebruikt NetTopologySuite 2.6.0, MultiLineString en RD New. Voor kaartuitvoer is een getransformeerde kopie afgesproken, met ETRS89 gelijkgesteld aan WGS84 voor visualisatie. De afzonderlijke transformer gebruikt ProjNET 2.1.0 met een WKT-definitie en een zevenparameter-datumtransformatie naar WGS84. Deze benadering is geen volledige RDNAPTRANS-implementatie. De ontwikkelaar bevestigde inmiddels 34 geslaagde tests, inclusief 14 connector-CRS-testgevallen en de test van het NSGI-referentiepunt binnen een voorlopige tolerantie van 0.00001 graad per as. Verdere nauwkeurigheidscontrole en het publieke assets-endpoint volgen. `/dev/liander/sample` bevat de GeoJSON-collectie in het samenvattingsantwoord. `/dev/liander/geojson` levert rechtstreeks dezelfde collectievorm met `application/geo+json`. Beide routes halen per aanroep opnieuw brondata op en gebruiken hetzelfde vaste voorbeeld-job-ID. De ontwikkelaar bevestigde HTTP 200 en 23 MultiLineString-features bij 23 geaccepteerde assets; de routes zelf hebben nog geen automatische HTTP-integratietests.
+
+LianderConnector vereist spatialReference.wkid 28992. Als latestWkid aanwezig is, moet ook die 28992 zijn. Ontbrekende, ongeldige of afwijkende CRS-metadata stopt de volledige aanroep voor het uitlezen van features; dit is geen quarantaine per record. Na deze wijziging bevestigde de ontwikkelaar via /dev/liander/sample mappingVersion liander-lv-v1, 23 gelezen, 23 geaccepteerd, 0 in quarantaine, countsBalance true en errors []. Ook /dev/liander/geojson is na de wijziging opnieuw door de ontwikkelaar gecontroleerd: HTTP 200, application/geo+json, FeatureCollection en 23 features.
 
 De lokale proef gebruikt een vast fictief job-ID en genereert nieuwe asset-ID's per aanroep. Het fictieve jobs-endpoint blijft een afzonderlijke B01-proef. Duurzame jobs, opslag, herhaalbaarheid tussen pogingen, snapshots, export en autorisatie vragen vervolgimplementatie. De volledige D03-review blijft open.

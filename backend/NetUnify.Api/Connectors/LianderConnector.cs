@@ -42,6 +42,26 @@ public sealed class LianderConnector(HttpClient httpClient)
                 "De Liander-selectie is afgekapt. Paginering is nodig.");
         }
 
+        if (!root.TryGetProperty("spatialReference", out var spatialReference)
+            || spatialReference.ValueKind != JsonValueKind.Object
+            || !spatialReference.TryGetProperty("wkid", out var wkid)
+            || wkid.ValueKind != JsonValueKind.Number
+            || !wkid.TryGetInt32(out var wkidValue)
+            || wkidValue != 28992)
+        {
+            throw new InvalidOperationException(
+                "Het Liander-antwoord moet spatialReference.wkid 28992 bevatten.");
+        }
+
+        if (spatialReference.TryGetProperty("latestWkid", out var latestWkid)
+            && (latestWkid.ValueKind != JsonValueKind.Number
+                || !latestWkid.TryGetInt32(out var latestWkidValue)
+                || latestWkidValue != 28992))
+        {
+            throw new InvalidOperationException(
+                "Het Liander-antwoord bevat een ongeldige of afwijkende latestWkid.");
+        }
+
         var features = root.GetProperty("features");
 
         if (features.ValueKind != JsonValueKind.Array)

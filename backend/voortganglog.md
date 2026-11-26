@@ -93,3 +93,25 @@ Twee vaste tests zijn toegevoegd in NetUnify.Api.Tests/AssetGeoJsonMapperTest.cs
 Program.cs, de GeoJSON-mapper en de mappertests zijn voor deze documentatie-update gelezen. De readmes, TODO, architectuur, het datasheet, de bestands- en gegevensoverzichten en de B01-testbeschrijving zijn bijgewerkt. Tests en live bronaanroepen zijn tijdens deze documentatie-update niet opnieuw uitgevoerd. Er is alleen documentatie gewijzigd; er zijn geen Git-commando's uitgevoerd.
 
 De lokale GeoJSON-subtaak is als gecontroleerd vastgelegd. D03, B01 en I03 blijven als volledige taken open. Het publieke assets-endpoint, frontendkoppeling, ruimere nauwkeurigheidscontrole, CRS-metadata-controle, opslag en duurzame exports volgen later. Voorstel voor de volgende kleine stap: de bron-CRS-metadata valideren. De casusgrens blijft geen KLIC en geen informatie voor graafveiligheid.
+
+## 26 november 2026 - Connector-CRS-controle en 34 tests bevestigd
+
+Werkstroom: backend. Taken: CRS-vervolg onder B02 en documentatieonderhoud onder I03. De ontwikkelaar controleerde het live bronantwoord met dezelfde query als LianderConnector: wkid en latestWkid zijn beide 28992; geometryType is esriGeometryPolyline. De SDK-inventarisatie op deze computer bevestigde daarnaast SDK 8.0.428, 9.0.319 en 10.0.400, met 10.0.400 geselecteerd.
+
+De ontwikkelaar voegde in LianderConnector de controle toe op spatialReference.wkid 28992 en op latestWkid 28992 indien aanwezig, voor het uitlezen van features. Ontbrekende, ongeldige of afwijkende metadata stopt de volledige aanroep. De build is door de ontwikkelaar bevestigd. LianderConnectorTests.cs bevat twee geldige en twaalf ongeldige scenario's met vaste HTTP-antwoorden. De ontwikkelaar bevestigde daarna 34 geslaagde tests: 15 verwerking, 3 transformatie, 2 GeoJSON-mapper en 14 connector-CRS-testgevallen.
+
+De actuele connector en testcode zijn voor deze documentatie-update gelezen. De live Development-routes zijn na de wijziging nog niet opnieuw gecontroleerd. De readmes, TODO, het datasheet, de architectuur, de bestands- en gegevensoverzichten en de B01-testbeschrijving zijn bijgewerkt. D03, B01 en I03 blijven open; alleen de CRS-subtaak is als gecontroleerd afgevinkt. Historische voortgangsregels behouden hun toenmalige stand. Tijdens deze documentatie-update zijn geen applicatiecode of tests gewijzigd en geen Git-commando's uitgevoerd. Tests zijn niet door de assistent opnieuw uitgevoerd.
+
+Voorstel voor de volgende kleine stap: de live /dev/liander/sample-route opnieuw controleren met de gewijzigde connector. De casusgrens blijft geen KLIC en geen informatie voor graafveiligheid.
+
+## 26 november 2026 - Live sample na CRS-wijziging bevestigd
+
+Werkstroom: backend. Taken: live controle onder B02 en documentatieonderhoud onder I03. De ontwikkelaar bevestigde na de connectorwijziging via /dev/liander/sample mappingVersion liander-lv-v1, 23 gelezen, 23 geaccepteerd, 0 in quarantaine, countsBalance true en errors []. De live sample-subtaak is daarmee afgevinkt. De teruggekoppelde selectie bevat geen afzonderlijke GeoJSON-controle.
+
+De readmes, TODO, architectuur, bestands- en gegevensoverzichten en het datasheet zijn bijgewerkt. De eerdere logregels behouden hun toenmalige stand. Er zijn alleen documenten gewijzigd; geen applicatiecode, tests of Git-commando's. Tests en bronaanroepen zijn niet door de assistent opnieuw uitgevoerd. D03, B01 en I03 blijven open. Voorstel voor de volgende kleine stap: de afzonderlijke /dev/liander/geojson-route opnieuw controleren na de CRS-wijziging. Geen KLIC en geen informatie voor graafveiligheid.
+
+## 26 november 2026 - Live GeoJSON na CRS-wijziging bevestigd
+
+Werkstroom: backend. Taken: laatste live controle van het CRS-vervolg onder B02 en documentatieonderhoud onder I03. De ontwikkelaar bevestigde voor /dev/liander/geojson HTTP 200, application/geo+json, FeatureCollection en 23 features. De betreffende TODO-subtaak is afgevinkt. Samen met de eerder herhaalde sample-controle en 34 geslaagde tests is het afgebakende CRS-vervolg afgerond.
+
+De readmes, TODO, architectuur, bestands- en gegevensoverzichten en het datasheet zijn bijgewerkt. Er zijn alleen documenten gewijzigd. Applicatiecode en tests zijn niet gewijzigd; er zijn geen Git-commando's uitgevoerd. De controles zijn door de ontwikkelaar uitgevoerd en teruggekoppeld; tests en live aanroepen zijn niet door de assistent herhaald. Historische logregels behouden hun toenmalige stand. D03, B01 en I03 blijven open, evenals paginering, opslag, duurzame jobs, het publieke assets-endpoint en de overige vastgelegde vervolgpunten. Geen KLIC en geen informatie voor graafveiligheid.

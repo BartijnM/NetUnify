@@ -6,7 +6,7 @@ Een bbox is een rechthoek met west-, zuid-, oost- en noordgrens. Voor andere bro
 
 | Bron | Onderzochte categorie | Status |
 | --- | --- | --- |
-| Liander | Laagspanningskabel, laag 112 | Eerste importbron; D01/D02 handmatig onderzocht. Lokale B02-verwerking met 23 records en 15 automatische tests gecontroleerd; daarnaast 3 transformatietests en 2 GeoJSON-mappertests. Lokale GeoJSON-uitvoer met 23 features gecontroleerd. |
+| Liander | Laagspanningskabel, laag 112 | Eerste importbron; D01/D02 handmatig onderzocht. Lokale B02-verwerking met 23 records en 15 automatische tests gecontroleerd; daarnaast 3 transformatietests en 2 GeoJSON-mappertests. Lokale GeoJSON-uitvoer met 23 features gecontroleerd. Inmiddels ook 14 connector-CRS-testgevallen; 34 geslaagde tests in totaal bevestigd. |
 | Enexis | Middenspanningskabel, provinciale publicatie, laag 2 | Werkende bronquery en drie records gecontroleerd; dekking en peildatum nog open. |
 | Stedin | Middenspanningsverbindingen, shapefile | Bestandsstructuur, CRS, geometriesoort en drie DBF-rijen gecontroleerd; bron-ID en herpublicatievoorwaarden nog open. |
 
@@ -179,7 +179,7 @@ Bij een noemer van nul wordt 'niet van toepassing' gerapporteerd. Het aantal ext
 
 - Liander: peildatum en stabiliteit van `OBJECTID` tussen publicaties blijven open. De volledige laag, querylimieten en paginering zijn met deze selectie niet bewezen.
 - Exacte spanning en materiaal zijn niet beschikbaar als eigen bronveld. Waarden worden niet op basis van aannames ingevuld.
-- De afgesproken ID- en lijnstructuurvalidatie is lokaal geïmplementeerd en met vaste tests gecontroleerd. Het publieke assets-endpoint, verdere nauwkeurigheidscontrole, duurzame verwerking, opslag en herstel zijn vervolgwerk. De connector vraagt RD-uitvoer aan, maar valideert de CRS-metadata van het antwoord nog niet afzonderlijk.
+- De afgesproken ID- en lijnstructuurvalidatie is lokaal geïmplementeerd en met vaste tests gecontroleerd. Het publieke assets-endpoint, verdere nauwkeurigheidscontrole, duurzame verwerking, opslag en herstel zijn vervolgwerk. De connector vraagt RD-uitvoer aan en valideert inmiddels de CRS-metadata voor het uitlezen van features; de controle en tests staan in het laatste onderdeel hieronder.
 - De bestaande Enexis- en Stedin-proeven betreffen middenspanning; vergelijkbaarheid met de eerste LS-import is niet aangetoond.
 - Voor Enexis en Stedin blijven de datasetgebonden open vragen uit D01 van toepassing.
 
@@ -279,4 +279,22 @@ De klasse AssetGeoJsonMapperTests staat lokaal in `NetUnify.Api.Tests/AssetGeoJs
 
 De PowerShell-controle parseerde de collectie na expliciete omzetting van de antwoordinhoud naar tekst. De controle ondersteunt zowel tekst als UTF-8-bytes; de daadwerkelijke oorspronkelijke .NET-inhoudstype-regel is niet teruggekoppeld. De lokale start- en controle-instructies staan in de backend-README. Voor deze documentatie-update zijn Program.cs, de mapper en de twee mappertests gelezen; tests en live routes zijn niet opnieuw uitgevoerd.
 
-Voorstel voor vervolg: de CRS-metadata van het bronantwoord expliciet valideren voordat RD-mapping plaatsvindt. De voorlopige transformatietolerantie en de beperking tot één onafhankelijk referentiepunt blijven gelden. D03, B01 en I03 blijven als volledige taken open. **Geen KLIC en geen informatie voor graafveiligheid.**
+Bij deze GeoJSON-stap was het voorstel voor vervolg: de CRS-metadata van het bronantwoord expliciet valideren voordat RD-mapping plaatsvindt. Dit vervolg is hieronder uitgewerkt. De voorlopige transformatietolerantie en de beperking tot één onafhankelijk referentiepunt blijven gelden. D03, B01 en I03 blijven als volledige taken open. **Geen KLIC en geen informatie voor graafveiligheid.**
+
+## 26 november 2026 - CRS-metadata-controle in LianderConnector
+
+De ontwikkelaar controleerde met dezelfde query als de connector het live bronantwoord. De teruggekoppelde metadata bevat wkid 28992, latestWkid 28992 en geometryType esriGeometryPolyline. De geselecteerde weergave gaf error en exceededTransferLimit als null; daarmee is niet vastgesteld of die velden ontbreken of expliciet null zijn.
+
+LianderConnector vereist voor het uitlezen van features een spatialReference-object met een numerieke, als Int32 leesbare wkid 28992. latestWkid is optioneel; indien aanwezig moet ook deze numeriek, als Int32 leesbaar en 28992 zijn. Ontbrekende, ongeldige of afwijkende CRS-metadata veroorzaakt een InvalidOperationException voor de volledige aanroep. Dit controleert de aangegeven CRS-metadata; het bewijst niet onafhankelijk het werkelijke stelsel van ieder punt. GeometryType wordt nog niet expliciet in de connector gevalideerd.
+
+De ontwikkelaar bevestigde de build en 34 geslaagde tests. LianderConnectorTests.cs voegt 14 testgevallen toe met een nagebootste HttpMessageHandler: twee geldige antwoorden (met en zonder latestWkid) en twaalf ongeldige antwoorden. De afkeurgevallen omvatten ontbrekende of verkeerd gevormde spatialReference, ontbrekende/null/tekstuele/afwijkende of te grote wkid en null/tekstuele/afwijkende of te grote latestWkid. De geldige gevallen controleren ook dat features na het opruimen van het JsonDocument leesbaar blijven. De tests doen geen live bronaanroepen en hosten geen API-server.
+
+De code en tests zijn voor de documentatie-update gelezen. Daarna zijn beide live Development-routes door de ontwikkelaar opnieuw gecontroleerd, zoals hieronder vastgelegd. D03, B01 en I03 blijven als volledige taken open. **Geen KLIC en geen informatie voor graafveiligheid.**
+
+### Live sample na de CRS-wijziging
+
+De ontwikkelaar bevestigde daarna opnieuw het antwoord van /dev/liander/sample: mappingVersion liander-lv-v1, counts.read 23, counts.accepted 23, counts.quarantined 0, countsBalance true en errors []. Dit bevestigt dat de gewijzigde connector het live bronantwoord accepteert en dat de sample-verwerking sluitende tellingen oplevert. De geselecteerde uitvoer bevat geen GeoJSON, featuretelling of inhoudstype; die zijn bij deze controle niet afzonderlijk teruggekoppeld. De daaropvolgende afzonderlijke GeoJSON-controle staat hieronder. De 34 geslaagde tests blijven de laatst bevestigde testuitkomst.
+
+### Live GeoJSON na de CRS-wijziging
+
+De ontwikkelaar bevestigde daarna voor /dev/liander/geojson HTTP 200, inhoudstype application/geo+json, type FeatureCollection en 23 features. Samen met de herhaalde sample-controle en de 34 geslaagde tests rondt dit het afgebakende CRS-vervolg af. De tellingen zijn afzonderlijke live meetmomenten; beide routes halen opnieuw brondata op. Geometrietype en puntwaarden zijn bij deze laatste controle niet opnieuw afzonderlijk teruggekoppeld. D03, B01 en I03 blijven open. Geen KLIC en geen informatie voor graafveiligheid.

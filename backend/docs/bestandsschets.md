@@ -15,7 +15,7 @@ De genoemde locaties vallen onder backend/NetUnify.Api/.
 | Services/JobService.cs | Levert het jobsoverzicht; later ook aanspreekpunt voor echte jobgegevens | Levert nu vaste fictieve jobs |
 | Services/ImportService.cs | Kiest op basis van de bron de connector en processor en verzamelt het resultaat | Voorstel voor gezamenlijke aansturing |
 | Services/ImportWorker.cs | Voert ingeplande importjobs uit en werkt hun voortgang bij | Voorstel voor latere jobuitvoering |
-| Connectors/LianderConnector.cs | Haalt Liander-JSON op via ArcGIS REST | Aanwezig voor de vaste bbox |
+| Connectors/LianderConnector.cs | Haalt Liander-JSON op via ArcGIS REST en controleert CRS-metadata voor het uitlezen van features | Aanwezig voor de vaste bbox; 14 connector-CRS-testgevallen |
 | Connectors/EnexisConnector.cs | Haalt JSON op uit de onderzochte provinciale ArcGIS-publicatie | Voorstel; dekking en categorie nog afstemmen |
 | Connectors/StedinConnector.cs | Downloadt en leest de samenhangende shapefile-bestanden | Voorstel; concrete leesbibliotheek nog kiezen |
 | Mapping/LianderAssetMapper.cs en LianderGeometryMapper.cs | Lezen bronvelden, controleren lijnpaden en maken uniforme assets | Aanwezig |
@@ -74,6 +74,6 @@ De Liander-controleroute gebruikt een vast voorbeeld-job-ID. Het fictieve jobsov
 
 ## Gedeelde afspraken
 
-Alle bronnen gaan naar hetzelfde Asset-model. Iedere bron krijgt eigen lees- en mappingregels, een mappingversie en herleidbare bron-ID's. Intern is RD New met MultiLineString gekozen. RdToWgs84Transformer maakt al een afzonderlijke uitvoerkopie met SRID 4326 en lengtegraad vóór breedtegraad. De ontwikkelaar bevestigde drie transformatietests, twee GeoJSON-mappertests en 20 geslaagde tests in totaal. De transformer maakt via AssetGeoJsonMapper deel uit van de twee Development-routes hierboven. Een kaartclient en het publieke assets-endpoint zijn nog niet gekoppeld. De opslagkeuze en manier van jobuitvoering worden verder uitgewerkt tijdens de review.
+Alle bronnen gaan naar hetzelfde Asset-model. Iedere bron krijgt eigen lees- en mappingregels, een mappingversie en herleidbare bron-ID's. Intern is RD New met MultiLineString gekozen. RdToWgs84Transformer maakt al een afzonderlijke uitvoerkopie met SRID 4326 en lengtegraad vóór breedtegraad. De ontwikkelaar bevestigde drie transformatietests, twee GeoJSON-mappertests en inmiddels 34 geslaagde tests in totaal, inclusief 14 connector-CRS-testgevallen. De connector vereist wkid 28992 en controleert een eventueel aanwezige latestWkid eveneens op 28992. Na deze wijziging bevestigde de ontwikkelaar via /dev/liander/sample mappingVersion liander-lv-v1, 23 gelezen, 23 geaccepteerd, 0 in quarantaine, countsBalance true en errors []. Ook /dev/liander/geojson is na de wijziging opnieuw door de ontwikkelaar gecontroleerd: HTTP 200, application/geo+json, FeatureCollection en 23 features. De transformer maakt via AssetGeoJsonMapper deel uit van de twee Development-routes hierboven. Een kaartclient en het publieke assets-endpoint zijn nog niet gekoppeld. De opslagkeuze en manier van jobuitvoering worden verder uitgewerkt tijdens de review.
 
 Het [gegevensoverzicht](gegevensoverzicht.md) beschrijft de gegevens. Het [datasheet](datasheet.md) bevat bronfeiten en controles. De [architectuur](architectuur.md) bevat de verdere ontwerpvragen.
