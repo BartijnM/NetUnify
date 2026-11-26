@@ -85,7 +85,7 @@ Bij de wachtende job zijn de drie tellingsvelden afwezig doordat counts null is.
 
 ## Verwerking van de gegevens
 
-| Stap | Wat gebeurt er? | Wat levert dat op? |
+| Stap | Wat gebeurt er? | Wat levert dat op? |   
 | --- | --- | --- |
 | 1. Selectie bepalen | Een bron, dataset en gebied worden gekozen | Een afgebakende hoeveelheid brondata om te verwerken |
 | 2. Ophalen | De connector vraagt de gegevens op of leest de bronbestanden | Bronrecords met kenmerken en geometrie |
